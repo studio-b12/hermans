@@ -13,7 +13,7 @@ func main() {
 
 	// spew.Dump(categories)
 
-	items, err := scraper.ScrapeCategory("baguettes")
+	items, err := scraper.ScrapeCategory("currywurst-snacks")
 	if err != nil {
 		panic(err)
 	}

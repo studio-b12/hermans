@@ -16,7 +16,7 @@ func ScrapeShop() ([]*Category, error) {
 		return nil, err
 	}
 
-	categories := []*Category{}
+	var categories []*Category
 
 	doc.Find("select.select[name=target]").First().Children().Each(func(i int, s *goquery.Selection) {
 		id, ok := s.Attr("value")
@@ -46,16 +46,35 @@ func ScrapeCategory(category string) ([]*StoreItem, error) {
 		return nil, err
 	}
 
-	items := []*StoreItem{}
+	var items []*StoreItem
 	doc.Find("div.formbody").Each(func(i int, s *goquery.Selection) {
 		var item StoreItem
+
 		item.Id, _ = s.Find("input[type=hidden][name=FORM_SUBMIT]").First().Attr("value")
 		item.Title = s.Find("h3[itemprop=name]").First().Text()
 		item.Description = s.Find("div.description").Text()
 		item.Price = s.Find("div.price[itemprop=price]").Text()
-		if item.Title == "" {
+
+		s.Find("fieldset.checkbox_container span").Each(func(i int, selection *goquery.Selection) {
+			name, ok := selection.Find("input.checkbox").Attr("name")
+			if !ok {
+				return
+			}
+			text := selection.Find("label").Text()
+			item.Variants = append(item.Variants, &Variant{Name: name, Description: text})
+		})
+
+		dips := s.Find("select[name*=dips] option").Map(func(i int, selection *goquery.Selection) string {
+			return selection.Text()
+		})
+		if len(dips) > 1 {
+			item.Dips = dips[1:]
+		}
+
+		if !item.IsValid() {
 			return
 		}
+
 		items = append(items, &item)
 	})
 

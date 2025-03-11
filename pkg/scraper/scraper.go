@@ -10,6 +10,21 @@ import (
 
 var ignoreCategories = []string{"shop", "allergene-zusatzstoffe"}
 
+func ScrapeAll() (*Data, error) {
+	categories, err := ScrapeShop()
+	if err != nil {
+		return nil, err
+	}
+
+	drinks, err := ScrapeDrinks()
+	if err != nil {
+		return nil, err
+	}
+
+	data := &Data{Categories: categories, Drinks: drinks}
+	return data, nil
+}
+
 func ScrapeShop() ([]*Category, error) {
 	doc, err := req("shop")
 	if err != nil {
@@ -79,6 +94,24 @@ func ScrapeCategory(category string) ([]*StoreItem, error) {
 	})
 
 	return items, nil
+}
+
+func ScrapeDrinks() ([]*Drink, error) {
+	doc, err := req("essen-trinken-gehen-braunschweig")
+	if err != nil {
+		return nil, err
+	}
+
+	var drinks []*Drink
+	doc.Find("div.panes div.section").First().Find("div.item").Each(func(i int, s *goquery.Selection) {
+		var drink Drink
+		drink.Name = s.Find("div.label").Text()
+		drink.Description = s.Find("div.subline").Text()
+		drink.Price = s.Find("div.price").Text()
+		drinks = append(drinks, &drink)
+	})
+
+	return drinks, nil
 }
 
 func req(path string) (*goquery.Document, error) {

@@ -1,25 +1,36 @@
 package scraper
 
+type Data struct {
+	Categories []*Category `json:"categories"`
+	Drinks     []*Drink    `json:"drinks"`
+}
+
 type Variant struct {
-	Name        string
-	Description string
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Category struct {
-	Id    string
-	Name  string
-	Items []*StoreItem
+	Id    string       `json:"id"`
+	Name  string       `json:"name"`
+	Items []*StoreItem `json:"items"`
 }
 
 type StoreItem struct {
-	Id          string
-	Title       string
-	Description string
-	Price       string
-	Variants    []*Variant
-	Dips        []string
+	Id          string     `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Price       string     `json:"price"`
+	Variants    []*Variant `json:"variants"`
+	Dips        []string   `json:"dips"`
 }
 
 func (t *StoreItem) IsValid() bool {
 	return t.Id != "" && t.Title != ""
+}
+
+type Drink struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Price       string `json:"price"`
 }

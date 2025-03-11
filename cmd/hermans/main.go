@@ -2,21 +2,19 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/zekrotja/hermans/pkg/scraper"
+	"github.com/zekrotja/hermans/pkg/controller"
 )
 
 func main() {
-	// categories, err := scraper.ScrapeShop()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// spew.Dump(categories)
-
-	items, err := scraper.ScrapeCategory("currywurst-snacks")
+	ctl, err := controller.New()
 	if err != nil {
 		panic(err)
 	}
 
-	spew.Dump(items)
+	data, err := ctl.GetScrapedData()
+	if err != nil {
+		panic(err)
+	}
+
+	spew.Dump(data)
 }

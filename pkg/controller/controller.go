@@ -1,22 +1,26 @@
 package controller
 
 import (
-	"github.com/zekrotja/hermans/pkg/db"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/zekrotja/hermans/pkg/cache"
+	"github.com/zekrotja/hermans/pkg/model"
 	"github.com/zekrotja/hermans/pkg/scraper"
 )
 
 type Controller struct {
-	scrapeDb *db.LocalDb[*scraper.Data]
+	scrapeCache *cache.LocalCache[*scraper.Data]
 }
 
 func New() (*Controller, error) {
-	scrapeDb, err := db.OpenLocalDb[*scraper.Data]("db/scrape_data.msgpack")
+	scrapeDb, err := cache.OpenLocalCache[*scraper.Data]("db/scrape_data.msgpack")
 	if err != nil {
 		return nil, err
 	}
 
 	t := &Controller{
-		scrapeDb: scrapeDb,
+		scrapeCache: scrapeDb,
 	}
 	return t, nil
 }
@@ -27,7 +31,7 @@ func (t *Controller) Scrape() (*scraper.Data, error) {
 		return nil, err
 	}
 
-	err = t.scrapeDb.Store(data)
+	err = t.scrapeCache.Store(data)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +40,7 @@ func (t *Controller) Scrape() (*scraper.Data, error) {
 }
 
 func (t *Controller) GetScrapedData() (*scraper.Data, error) {
-	data, err := t.scrapeDb.Load()
+	data, err := t.scrapeCache.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -46,4 +50,8 @@ func (t *Controller) GetScrapedData() (*scraper.Data, error) {
 	}
 
 	return t.Scrape()
+}
+
+func (t *Controller) CreateOrderList() {
+
 }

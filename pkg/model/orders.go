@@ -1,5 +1,15 @@
 package model
 
+import (
+	"time"
+)
+
+type OrderList struct {
+	Id      string    `json:"id"`
+	Created time.Time `json:"created"`
+	Orders  []Order   `json:"orders"`
+}
+
 type StoreItem struct {
 	Id       string   `json:"id"`
 	Variants []string `json:"variants"`
@@ -12,6 +22,7 @@ type Drink struct {
 
 type Order struct {
 	Id        string     `json:"id"`
+	Created   time.Time  `json:"created"`
 	StoreItem *StoreItem `json:"store_item"`
 	Drink     *Drink     `json:"drink"`
 }

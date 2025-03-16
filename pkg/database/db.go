@@ -45,13 +45,13 @@ func (t *Database) CreateOrderList(list *model.OrderList) error {
 	_, err := t.conn.Exec(
 		`INSERT INTO "OrderList" ("Id", "Created") VALUES (?, ?);`,
 		list.Id, list.Created)
-	return err
+	return wrapErr(err)
 }
 
 func (t *Database) CreateOrder(orderListId string, order *model.Order) error {
 	tx, err := t.conn.BeginTx(context.TODO(), nil)
 	if err != nil {
-		return err
+		return wrapErr(err)
 	}
 	defer tx.Rollback()
 
@@ -63,16 +63,16 @@ func (t *Database) CreateOrder(orderListId string, order *model.Order) error {
 			`INSERT INTO "Drink" ("Id", "Name", "Size") VALUES (?, ?, ?);`,
 			drinkId, order.Drink.Name, order.Drink.Size)
 		if err != nil {
-			return err
+			return wrapErr(err)
 		}
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO "Order" ("Id", "Created", "OrderListId", "StoreItemId", "DrinkId") 
-		VALUES (?, ?, ?, ?, ?);`,
-		order.Id, order.Created, orderListId, order.StoreItem.Id, drinkId)
+		`INSERT INTO "Order" ("Id", "Created", "Creator", "OrderListId", "StoreItemId", "DrinkId") 
+		VALUES (?, ?, ?, ?, ?, ?);`,
+		order.Id, order.Created, order.Creator, orderListId, order.StoreItem.Id, drinkId)
 	if err != nil {
-		return err
+		return wrapErr(err)
 	}
 
 	for _, variant := range order.StoreItem.Variants {
@@ -80,7 +80,7 @@ func (t *Database) CreateOrder(orderListId string, order *model.Order) error {
 			`INSERT INTO "StoreItemVariant" ("OrderId", "Variant") VALUES (?, ?);`,
 			order.Id, variant)
 		if err != nil {
-			return err
+			return wrapErr(err)
 		}
 	}
 
@@ -89,15 +89,25 @@ func (t *Database) CreateOrder(orderListId string, order *model.Order) error {
 			`INSERT INTO "StoreItemDip" ("OrderId", "Dip") VALUES (?, ?);`,
 			order.Id, dip)
 		if err != nil {
-			return err
+			return wrapErr(err)
 		}
 	}
 
-	return tx.Commit()
+	return wrapErr(tx.Commit())
+}
+
+func (t *Database) GetOrderList(orderListId string) (*model.OrderList, error) {
+	var list model.OrderList
+	err := t.conn.QueryRow(`SELECT "Id", "Created" FROM "OrderList" WHERE "Id" = ?`, orderListId).
+		Scan(&list.Id, &list.Created)
+	if err != nil {
+		return nil, wrapErr(err)
+	}
+
+	return &list, nil
 }
 
 func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
-
 	rows, err := t.conn.Query(`
 		SELECT "Id", "Created", "StoreItemId", "Name", "Size", "variants",
 			GROUP_CONCAT("StoreItemDip"."Dip") AS "dips" FROM (
@@ -107,14 +117,16 @@ func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 				LEFT JOIN "Drink" ON "Drink"."Id" = "Order"."DrinkId"
 				LEFT JOIN "StoreItemVariant" ON "StoreItemVariant"."OrderId" = "Order"."Id"
 				WHERE "Order"."OrderListId" = ?
+				HAVING "Order"."Id" IS NOT NULL
 		)
-		LEFT JOIN "StoreItemDip" ON "StoreItemDip"."OrderId" = "Id"`,
+		LEFT JOIN "StoreItemDip" ON "StoreItemDip"."OrderId" = "Id"
+		HAVING "Id" IS NOT NULL`,
 		orderListId)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err)
 	}
 
 	var orders []*model.Order
@@ -129,7 +141,7 @@ func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 		)
 		err = rows.Scan(&order.Id, &order.Created, &storeItem.Id, &drinkName, &drinkSize, &variants, &dips)
 		if err != nil {
-			return nil, err
+			return nil, wrapErr(err)
 		}
 		order.StoreItem = &storeItem
 		if drinkName != nil {

@@ -1,0 +1,66 @@
+### Tests
+
+POST {{.instance}}/api/lists
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 201, "status code");
+var listId = response.Body.id;
+info("created list with id =", listId);
+
+---
+
+GET {{.instance}}/api/lists/{{.listId}}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 200, "status code");
+
+---
+
+POST {{.instance}}/api/lists/{{.listId}}/orders
+
+[Body]
+{
+    "creator": "",
+    "store_item": {
+        "id": "someItem"
+    }
+}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 201, "status code");
+
+---
+
+POST {{.instance}}/api/lists/{{.listId}}/orders
+
+[Body]
+{
+    "creator": "zekro",
+    "store_item": {
+        "id": "someItem"
+    }
+}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 201, "status code");
+
+---
+
+GET {{.instance}}/api/lists/{{.listId}}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 200, "status code");
+
+---
+
+### Teardown
+
+DELETE {{.instance}}/api/lists/{{.listId}}
+
+[Script]
+assert_eq(response.StatusCode, 204, "status code");

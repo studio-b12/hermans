@@ -90,11 +90,25 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 	return order, nil
 }
 
-func (t *Controller) GetOrders(orderListId string) ([]*model.Order, error) {
-	orders, err := t.db.GetOrders(orderListId)
+func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
+	orderList, err := t.db.GetOrderList(orderListId)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, nil
+	orderList.Orders, err = t.db.GetOrders(orderListId)
+	if err != nil {
+		return nil, err
+	}
+
+	return orderList, nil
+}
+
+func (t *Controller) DeleteOrderList(orderListId string) error {
+	err := t.db.DeleteOrderList(orderListId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

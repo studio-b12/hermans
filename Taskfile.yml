@@ -1,0 +1,21 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  APP_NAME: "hermans"
+
+tasks:
+  run:
+    desc: "Build and run application"
+    aliases:
+      - r
+    cmds:
+      - go run cmd/{{.APP_NAME}}/main.go {{.CLI_ARGS}}
+
+  integrationtests:
+    desc: "Run integrationtests"
+    aliases:
+      - it
+    cmds:
+      - goat --params integrationtests/params.local.toml  {{or .CLI_ARGS "integrationtests/tests"}}

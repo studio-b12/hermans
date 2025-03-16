@@ -24,13 +24,13 @@ POST {{.instance}}/api/lists/{{.listId}}/orders
 {
     "creator": "",
     "store_item": {
-        "id": "someItem"
+        "id": ""
     }
 }
 
 [Script]
 debug(response);
-assert_eq(response.StatusCode, 201, "status code");
+assert_eq(response.StatusCode, 400, "status code");
 
 ---
 

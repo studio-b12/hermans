@@ -32,9 +32,21 @@ func respondJson(w http.ResponseWriter, status int, v any) {
 }
 
 func respondErr(w http.ResponseWriter, err error) {
-	if vErr, ok := elk.As[validator.ValidationErrors](err); ok {
-		// FIXME: better wrapping
-		respondJson(w, http.StatusBadRequest, vErr)
+	if vErrs, ok := elk.As[validator.ValidationErrors](err); ok {
+		resp := ValidationErrors{
+			ErrorResponseModel: elk.NewError(ErrValidation, "invalid request object").
+				ToResponseModel(http.StatusBadRequest),
+		}
+		for _, vErr := range vErrs {
+			resp.ValidationErrors = append(resp.ValidationErrors, &ValidationError{
+				Field:   vErr.Namespace(),
+				Tag:     vErr.ActualTag(),
+				Value:   vErr.Value(),
+				Message: vErr.Error(),
+			})
+		}
+
+		respondJson(w, http.StatusBadRequest, resp)
 		return
 	}
 

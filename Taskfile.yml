@@ -18,4 +18,4 @@ tasks:
     aliases:
       - it
     cmds:
-      - goat --params integrationtests/params.local.toml  {{or .CLI_ARGS "integrationtests/tests"}}
+      - goat --params integrationtests/params.local.toml {{or .CLI_ARGS "integrationtests/tests"}}

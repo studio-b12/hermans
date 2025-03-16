@@ -4,25 +4,34 @@ import (
 	"time"
 )
 
+type DrinkSize int
+
+const (
+	DrinkSizeSmall DrinkSize = 0
+	DrinkSizeLarge           = 1
+)
+
 type OrderList struct {
 	Id      string    `json:"id"`
 	Created time.Time `json:"created"`
-	Orders  []Order   `json:"orders"`
+	Orders  []*Order  `json:"orders"`
 }
 
 type StoreItem struct {
-	Id       string   `json:"id"`
-	Variants []string `json:"variants"`
-	Dips     []string `json:"dips"`
+	Id       string   `json:"id" validate:"required"`
+	Variants []string `json:"variants" validate:"unique"`
+	Dips     []string `json:"dips" validate:"unique"`
 }
 
 type Drink struct {
-	Name string `json:"name"`
+	Name string    `json:"name" validate:"required"`
+	Size DrinkSize `json:"size" validate:"gte=0,lte=1"`
 }
 
 type Order struct {
 	Id        string     `json:"id"`
 	Created   time.Time  `json:"created"`
-	StoreItem *StoreItem `json:"store_item"`
+	Creator   string     `json:"creator" validate:"required"`
+	StoreItem *StoreItem `json:"store_item" validate:"required"`
 	Drink     *Drink     `json:"drink"`
 }

@@ -2,20 +2,26 @@ package controller
 
 import (
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/studio-b12/elk"
 	"github.com/zekrotja/hermans/pkg/cache"
 	"github.com/zekrotja/hermans/pkg/model"
 	"github.com/zekrotja/hermans/pkg/scraper"
+	"github.com/zekrotja/hermans/pkg/util/safesync"
 )
 
 type Controller struct {
 	db Database
 
+	validator *validator.Validate
+
 	scrapeCache *cache.LocalCache[*scraper.Data]
-	validator   *validator.Validate
+	storeItems  safesync.Map[string, *scraper.StoreItem]
+	drinks      safesync.Map[string, *scraper.Drink]
 }
 
 func New(cacheDir string, db Database) (*Controller, error) {
@@ -36,6 +42,18 @@ func (t *Controller) Scrape() (*scraper.Data, error) {
 	data, err := scraper.ScrapeAll()
 	if err != nil {
 		return nil, err
+	}
+
+	t.storeItems.Clear()
+	for _, category := range data.Categories {
+		for _, item := range category.Items {
+			t.storeItems.Store(item.Id, item)
+		}
+	}
+
+	t.drinks.Clear()
+	for _, drink := range data.Drinks {
+		t.drinks.Store(drink.Name, drink)
 	}
 
 	err = t.scrapeCache.Store(data)
@@ -80,6 +98,16 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 	err := t.validator.Struct(order)
 	if err != nil {
 		return nil, err
+	}
+
+	item, ok := t.storeItems.Load(order.StoreItem.Id)
+	if !ok {
+		return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", order.StoreItem.Id)
+	}
+
+	var invalidVariants ListError
+	for _, variant := range order.StoreItem.Variants {
+
 	}
 
 	err = t.db.CreateOrder(orderListId, order)

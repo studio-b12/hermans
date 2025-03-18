@@ -24,10 +24,10 @@ func New(ctl Controller, addr string) *API {
 		server: server,
 	}
 
+	mux.HandleFunc("GET /api/items", t.handleGetStoreItems)
 	mux.HandleFunc("POST /api/lists", t.handleCreateOrderList)
 	mux.HandleFunc("GET /api/lists/{id}", t.handleGetOrderList)
 	mux.HandleFunc("DELETE /api/lists/{id}", t.handleDeleteOrderList)
-
 	mux.HandleFunc("POST /api/lists/{id}/orders", t.handleCreateOrder)
 
 	return &t
@@ -35,6 +35,16 @@ func New(ctl Controller, addr string) *API {
 
 func (t *API) Start() error {
 	return t.server.ListenAndServe()
+}
+
+func (t *API) handleGetStoreItems(w http.ResponseWriter, r *http.Request) {
+	data, err := t.ctl.GetScrapedData()
+	if err != nil {
+		respondErr(w, err)
+		return
+	}
+
+	respondJson(w, http.StatusOK, data)
 }
 
 func (t *API) handleCreateOrderList(w http.ResponseWriter, r *http.Request) {

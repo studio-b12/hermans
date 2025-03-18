@@ -25,6 +25,15 @@ type StoreItem struct {
 	Dips        []string   `json:"dips"`
 }
 
+func (t *StoreItem) VariantsContain(name string) bool {
+	for _, variant := range t.Variants {
+		if variant.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *StoreItem) IsValid() bool {
 	return t.Id != "" && t.Title != ""
 }

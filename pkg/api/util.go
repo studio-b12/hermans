@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/studio-b12/elk"
+	"github.com/zekrotja/hermans/pkg/controller"
 	"github.com/zekrotja/hermans/pkg/database"
 )
 
@@ -57,7 +58,9 @@ func respondErr(w http.ResponseWriter, err error) {
 		respondJson(w, http.StatusNotFound,
 			eErr.ToResponseModel(http.StatusNotFound))
 		return
-	case ErrParseJsonBody:
+	case ErrParseJsonBody,
+		controller.ErrInvalidDips,
+		controller.ErrInvalidVariants:
 		respondJson(w, http.StatusBadRequest,
 			eErr.ToResponseModel(http.StatusBadRequest))
 		return

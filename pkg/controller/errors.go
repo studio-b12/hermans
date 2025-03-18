@@ -8,10 +8,16 @@ import (
 
 const (
 	ErrInvalidStoreItem = elk.ErrorCode("controller:invalid-store-item")
+	ErrInvalidVariants  = elk.ErrorCode("controller:invalid-variants")
+	ErrInvalidDips      = elk.ErrorCode("controller:invalid-dips")
 )
 
 type ListError []string
 
 func (t ListError) Error() string {
 	return strings.Join(t, ", ")
+}
+
+func (t ListError) Details() any {
+	return t
 }

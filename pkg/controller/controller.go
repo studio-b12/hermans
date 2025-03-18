@@ -107,7 +107,22 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 
 	var invalidVariants ListError
 	for _, variant := range order.StoreItem.Variants {
+		if !item.VariantsContain(variant) {
+			invalidVariants = append(invalidVariants, variant)
+		}
+	}
+	if len(invalidVariants) > 0 {
+		return nil, elk.Wrap(ErrInvalidVariants, invalidVariants, "invalid variants")
+	}
 
+	var invalidDips ListError
+	for _, dip := range order.StoreItem.Dips {
+		if !slices.Contains(item.Dips, dip) {
+			invalidDips = append(invalidDips, dip)
+		}
+	}
+	if len(invalidDips) > 0 {
+		return nil, elk.Wrap(ErrInvalidDips, invalidDips, "invalid dips")
 	}
 
 	err = t.db.CreateOrder(orderListId, order)

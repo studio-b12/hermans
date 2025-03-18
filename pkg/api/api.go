@@ -24,11 +24,11 @@ func New(ctl Controller, addr string) *API {
 		server: server,
 	}
 
-	mux.HandleFunc("GET /api/items", t.handleGetStoreItems)
-	mux.HandleFunc("POST /api/lists", t.handleCreateOrderList)
-	mux.HandleFunc("GET /api/lists/{id}", t.handleGetOrderList)
-	mux.HandleFunc("DELETE /api/lists/{id}", t.handleDeleteOrderList)
-	mux.HandleFunc("POST /api/lists/{id}/orders", t.handleCreateOrder)
+	mux.HandleFunc("GET /api/items", multiHandler(t.setCORSHeader, t.handleGetStoreItems))
+	mux.HandleFunc("POST /api/lists", multiHandler(t.setCORSHeader, t.handleCreateOrderList))
+	mux.HandleFunc("GET /api/lists/{id}", multiHandler(t.setCORSHeader, t.handleGetOrderList))
+	mux.HandleFunc("DELETE /api/lists/{id}", multiHandler(t.setCORSHeader, t.handleDeleteOrderList))
+	mux.HandleFunc("POST /api/lists/{id}/orders", multiHandler(t.setCORSHeader, t.handleCreateOrder))
 
 	return &t
 }
@@ -97,4 +97,10 @@ func (t *API) handleDeleteOrderList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (t *API) setCORSHeader(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
 }

@@ -13,6 +13,14 @@ import (
 	"github.com/zekrotja/hermans/pkg/database"
 )
 
+func multiHandler(handler ...http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		for _, h := range handler {
+			h(w, r)
+		}
+	}
+}
+
 func readJsonBody[T any](r *http.Request) (v T, err error) {
 	limitReader := io.LimitReader(r.Body, 1*1024*1024)
 	err = json.NewDecoder(limitReader).Decode(&v)

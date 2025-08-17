@@ -17,12 +17,14 @@ tasks:
 
   run-web:
     desc: "Run web application in dev mode"
+    deps:
+      - install-web-deps
     aliases:
       - rw
       - web
     dir: webapp
     cmds:
-      - npm run dev
+      - bun run dev
 
   integrationtests:
     desc: "Run integrationtests"
@@ -30,3 +32,13 @@ tasks:
       - it
     cmds:
       - goat --params integrationtests/params.local.toml {{or .CLI_ARGS "integrationtests/tests"}}
+
+  # --------------
+
+  install-web-deps:
+    dir: webapp
+    cmds:
+      - bun install
+    sources:
+      - package.json
+      - bun.lockdb

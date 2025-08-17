@@ -35,7 +35,7 @@ func respondJson(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
-		slog.Error("failed to encode response json", err)
+		slog.Error("failed to encode response json", "err", err)
 		return
 	}
 }

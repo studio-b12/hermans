@@ -68,7 +68,7 @@ func (t *Database) CreateOrder(orderListId string, order *model.Order) error {
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO "Order" ("Id", "Created", "Creator", "OrderListId", "StoreItemId", "DrinkId") 
+		`INSERT INTO "Order" ("Id", "Created", "Creator", "OrderListId", "StoreItemId", "DrinkId")
 		VALUES (?, ?, ?, ?, ?, ?);`,
 		order.Id, order.Created, order.Creator, orderListId, order.StoreItem.Id, drinkId)
 	if err != nil {
@@ -109,18 +109,15 @@ func (t *Database) GetOrderList(orderListId string) (*model.OrderList, error) {
 
 func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 	rows, err := t.conn.Query(`
-		SELECT "Id", "Created", "StoreItemId", "Name", "Size", "variants",
-			GROUP_CONCAT("StoreItemDip"."Dip") AS "dips" FROM (
-				SELECT "Order"."Id", "Created", "StoreItemId", "Drink"."Name", "Drink"."Size",
-					GROUP_CONCAT("StoreItemVariant"."Variant") AS "variants"
-				FROM "Order"
-				LEFT JOIN "Drink" ON "Drink"."Id" = "Order"."DrinkId"
-				LEFT JOIN "StoreItemVariant" ON "StoreItemVariant"."OrderId" = "Order"."Id"
-				WHERE "Order"."OrderListId" = ?
-				HAVING "Order"."Id" IS NOT NULL
-		)
-		LEFT JOIN "StoreItemDip" ON "StoreItemDip"."OrderId" = "Id"
-		HAVING "Id" IS NOT NULL`,
+		SELECT "Order"."Id", "Created", "Creator", "StoreItemId", "Drink"."Name", "Drink"."Size",
+			GROUP_CONCAT(DISTINCT "StoreItemVariant"."Variant") AS "variants",
+			GROUP_CONCAT(DISTINCT "StoreItemDip"."Dip") AS "dips"
+		FROM "Order"
+		LEFT JOIN "Drink" ON "Drink"."Id" = "Order"."DrinkId"
+		LEFT JOIN "StoreItemVariant" ON "StoreItemVariant"."OrderId" = "Order"."Id"
+		LEFT JOIN "StoreItemDip" ON "StoreItemDip"."OrderId" = "Order"."Id"
+		WHERE "Order"."OrderListId" = ?
+		GROUP BY "Order"."Id"`,
 		orderListId)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -139,7 +136,7 @@ func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 			variants  *string
 			dips      *string
 		)
-		err = rows.Scan(&order.Id, &order.Created, &storeItem.Id, &drinkName, &drinkSize, &variants, &dips)
+		err = rows.Scan(&order.Id, &order.Created, &order.Creator, &storeItem.Id, &drinkName, &drinkSize, &variants, &dips)
 		if err != nil {
 			return nil, wrapErr(err)
 		}

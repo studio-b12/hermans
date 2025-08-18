@@ -11,7 +11,6 @@ import (
 	"github.com/zekrotja/hermans/pkg/cache"
 	"github.com/zekrotja/hermans/pkg/model"
 	"github.com/zekrotja/hermans/pkg/scraper"
-	"github.com/zekrotja/hermans/pkg/util/safesync"
 )
 
 type Controller struct {
@@ -20,8 +19,6 @@ type Controller struct {
 	validator *validator.Validate
 
 	scrapeCache *cache.LocalCache[*scraper.Data]
-	storeItems  safesync.Map[string, *scraper.StoreItem]
-	drinks      safesync.Map[string, *scraper.Drink]
 }
 
 func New(cacheDir string, db Database) (*Controller, error) {
@@ -42,18 +39,6 @@ func (t *Controller) Scrape() (*scraper.Data, error) {
 	data, err := scraper.ScrapeAll()
 	if err != nil {
 		return nil, err
-	}
-
-	t.storeItems.Clear()
-	for _, category := range data.Categories {
-		for _, item := range category.Items {
-			t.storeItems.Store(item.Id, item)
-		}
-	}
-
-	t.drinks.Clear()
-	for _, drink := range data.Drinks {
-		t.drinks.Store(drink.Name, drink)
 	}
 
 	err = t.scrapeCache.Store(data)
@@ -100,7 +85,10 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 		return nil, err
 	}
 
-	item, ok := t.storeItems.Load(order.StoreItem.Id)
+	item, ok, err := t.getStoreItem(order.StoreItem.Id)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", order.StoreItem.Id)
 	}
@@ -154,4 +142,21 @@ func (t *Controller) DeleteOrderList(orderListId string) error {
 	}
 
 	return nil
+}
+
+func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, err error) {
+	data, err := t.GetScrapedData()
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, category := range data.Categories {
+		for _, si = range category.Items {
+			if si.Id == id {
+				return si, true, nil
+			}
+		}
+	}
+
+	return nil, false, nil
 }

@@ -68,7 +68,8 @@ func respondErr(w http.ResponseWriter, err error) {
 		return
 	case ErrParseJsonBody,
 		controller.ErrInvalidDips,
-		controller.ErrInvalidVariants:
+		controller.ErrInvalidVariants,
+		controller.ErrInvalidStoreItem:
 		respondJson(w, http.StatusBadRequest,
 			eErr.ToResponseModel(http.StatusBadRequest))
 		return

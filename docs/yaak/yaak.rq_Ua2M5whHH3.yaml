@@ -1,0 +1,22 @@
+type: http_request
+model: http_request
+id: rq_Ua2M5whHH3
+createdAt: 2025-08-18T11:20:52.552060844
+updatedAt: 2025-08-18T14:06:49.086889079
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: application/json
+description: Deletes a list and all orders in it.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: zXGeDHCKAn
+method: DELETE
+name: Delete list
+sortPriority: -1755508671033.997
+url: ${[ HOST ]}/api/lists/60405c78-3fc0-49aa-a88a-73f3a07506d4
+urlParameters: []

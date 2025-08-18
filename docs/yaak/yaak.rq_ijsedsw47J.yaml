@@ -1,0 +1,22 @@
+type: http_request
+model: http_request
+id: rq_ijsedsw47J
+createdAt: 2025-08-18T09:17:51.035280973
+updatedAt: 2025-08-18T14:05:24.983852342
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: application/json
+description: Returns a list of all categories with all items and a list of all drinks.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: zXGeDHCKAn
+method: GET
+name: Get all items
+sortPriority: -1755508671034.0
+url: ${[ HOST ]}/api/items
+urlParameters: []

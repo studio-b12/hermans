@@ -1,0 +1,22 @@
+type: http_request
+model: http_request
+id: rq_zPLi22yEa8
+createdAt: 2025-08-18T11:19:45.704778588
+updatedAt: 2025-08-18T14:06:37.007534979
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: application/json
+description: Returns the information of the list as well as a list of all orders in the list by its list ID.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: zXGeDHCKAn
+method: GET
+name: Get list
+sortPriority: -1755508671033.998
+url: ${[ HOST ]}/api/lists/ad9c1621-4bd4-4319-a61b-c7bc686f2f56
+urlParameters: []

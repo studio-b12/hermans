@@ -1,0 +1,14 @@
+type: workspace
+model: workspace
+id: wk_MbGccW82tQ
+createdAt: 2025-08-18T06:55:24.172882959
+updatedAt: 2025-08-18T06:55:24.172883730
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: hermans
+encryptionKeyChallenge: null
+settingValidateCertificates: true
+settingFollowRedirects: true
+settingRequestTimeout: 0

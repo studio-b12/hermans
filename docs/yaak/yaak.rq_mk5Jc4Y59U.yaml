@@ -1,0 +1,22 @@
+type: http_request
+model: http_request
+id: rq_mk5Jc4Y59U
+createdAt: 2025-08-18T11:19:05.651542793
+updatedAt: 2025-08-18T14:05:51.735928920
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: application/json
+description: Creates a new list and returns the ID and creation date of the list.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: zXGeDHCKAn
+method: POST
+name: Create a list
+sortPriority: -1755508671033.999
+url: ${[ HOST ]}/api/lists
+urlParameters: []

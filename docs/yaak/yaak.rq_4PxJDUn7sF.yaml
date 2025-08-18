@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_4PxJDUn7sF
+createdAt: 2025-08-18T11:21:25.043801
+updatedAt: 2025-08-18T14:07:04.274909056
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "creator": "Lux Mustermann",
+      "store_item": {
+        "id": "fmd750_product_242",
+        "variants": [
+          "ohne_zwiebeln",
+          "roestzwiebeln"
+        ],
+        "dips": [
+          "mit Salsa-Dressing",
+          "mit Majo"
+        ]
+      },
+      "drink": {
+        "name": "afri-cola",
+        "size": 1
+      }
+    }
+bodyType: application/json
+description: Creates a new order in the given list by its list id.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: xmhM42fMMC
+method: POST
+name: Create order
+sortPriority: -877754335516.9985
+url: ${[ HOST ]}/api/lists/ad9c1621-4bd4-4319-a61b-c7bc686f2f56/orders
+urlParameters: []

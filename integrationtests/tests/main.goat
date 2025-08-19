@@ -1,5 +1,18 @@
 ### Tests
 
+// Get store items
+
+GET {{.instance}}/api/items
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 200, "status code");
+var items = response.Body;
+
+---
+
+// Create a list
+
 POST {{.instance}}/api/lists
 
 [Script]
@@ -10,13 +23,36 @@ info("created list with id =", listId);
 
 ---
 
+// Get created list
+
 GET {{.instance}}/api/lists/{{.listId}}
 
 [Script]
 debug(response);
 assert_eq(response.StatusCode, 200, "status code");
+assert_eq(response.Body.orders, null, "no orders in list");
 
 ---
+
+// Try to create an order in an invalid list; should fail
+
+POST {{.instance}}/api/lists/someInvalidListId/orders
+
+[Body]
+{
+    "creator": "zekro",
+    "store_item": {
+        "id": "someInvalidItemId"
+    }
+}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 400, "status code");
+
+---
+
+// Try to create an order with empty values; shoud fail
 
 POST {{.instance}}/api/lists/{{.listId}}/orders
 
@@ -34,13 +70,40 @@ assert_eq(response.StatusCode, 400, "status code");
 
 ---
 
+// Try to create an order with an invalid item ID; should fail
+
 POST {{.instance}}/api/lists/{{.listId}}/orders
 
 [Body]
 {
     "creator": "zekro",
     "store_item": {
-        "id": "someItem"
+        "id": "someInvalidItemId"
+    }
+}
+
+[Script]
+debug(response);
+assert_eq(response.StatusCode, 400, "status code");
+
+---
+
+// Try to create an order with a valid item ID
+
+POST {{.instance}}/api/lists/{{.listId}}/orders
+
+[PreScript]
+var item = items.categories[0].items[0];
+var variant = item.variants[0].name;
+
+[Body]
+{
+    "creator": "zekro",
+    "store_item": {
+        "id": "{{.item.id}}",
+        "variants": [
+            "{{.variant}}"
+        ]
     }
 }
 
@@ -50,11 +113,17 @@ assert_eq(response.StatusCode, 201, "status code");
 
 ---
 
+// Check orders in list
+
 GET {{.instance}}/api/lists/{{.listId}}
 
 [Script]
 debug(response);
 assert_eq(response.StatusCode, 200, "status code");
+assert_eq(response.Body.orders.length, 1, "one order in list");
+assert_eq(response.Body.orders[0].creator, "zekro", "order creator");
+assert_eq(response.Body.orders[0].store_item.id, item.id, "order item id");
+assert_eq(response.Body.orders[0].store_item.variants, [variant], "order item variants");
 
 ---
 

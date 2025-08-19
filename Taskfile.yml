@@ -12,6 +12,7 @@ tasks:
       - r
     env:
       HMS_DATABASE_DSN: "db/orders.sqlite"
+      HMS_BIND_ADDRESS: "127.0.0.1:8080"
     cmds:
       - go run cmd/{{.APP_NAME}}/main.go {{.CLI_ARGS}}
 

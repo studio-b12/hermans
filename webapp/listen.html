@@ -3,50 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alle Listen</title>
+    <title>Bestellübersicht</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h2>Alle Listen</h2>
-        <div id="listenList"></div>
+        <div class="list-header">
+            <h2>Bestellübersicht</h2>
+            <div id="listInfo"><p>Lade Listen-Details...</p></div>
+        </div>
+        <div class="orders-container" id="ordersContainer">
+            <p>Lade Bestellungen...</p>
+        </div>
     </div>
     <script>
-        const listenList = document.getElementById('listenList');
+        const listInfoDiv = document.getElementById('listInfo');
+        const ordersContainer = document.getElementById('ordersContainer');
         const params = new URLSearchParams(window.location.search);
-        const groupId = params.get('id'); 
+        const listId = params.get('id');
 
-        fetch(`http://localhost:8080/api/lists/${groupId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data || !data.id) {
-                    listenList.innerHTML = "<p>Keine Liste gefunden.</p>";
-                    return;
+        function loadAndRenderList() {
+            if (!listId) {
+                ordersContainer.innerHTML = "<p style='color:red;'>Fehler: Keine Listen-ID in der URL gefunden.</p>";
+                return;
+            }
+
+            const listUrl = `http://localhost:8080/api/lists/${listId}`;
+            const itemsUrl = 'http://localhost:8080/api/items';
+
+            Promise.all([
+                fetch(listUrl).then(res => res.json()),
+                fetch(itemsUrl).then(res => res.json())
+            ])
+            .then(([listData, itemsData]) => {
+                
+                const allItemsMap = new Map();
+                if (itemsData && itemsData.categories && itemsData.drinks) {
+                    itemsData.categories.forEach(cat => cat.items?.forEach(item => allItemsMap.set(item.id, item)));
+                    itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
                 }
-                listenList.innerHTML = `
-                    <strong>Listen-ID:</strong> ${data.id}<br>
-                    <span style="font-size:0.95em;color:#555;">Erstellt: ${data.created}</span><br>
-                    <h3>Bestellungen:</h3>
+
+                const createdDate = new Date(listData.created);
+                listInfoDiv.innerHTML = `
+                    <p style="margin:0; color: var(--text-light);">
+                        <strong>ID:</strong> ${listData.id} | 
+                        <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')}
+                    </p>
                 `;
-                if (Array.isArray(data.orders) && data.orders.length > 0) {
-                    data.orders.forEach(order => {
-                        const orderDiv = document.createElement('div');
-                        orderDiv.className = 'item';
-                        orderDiv.innerHTML = `
-                            <strong>${order.creator}</strong> <br>
-                            <span>${order.created}</span><br>
-                            <span>Speise: ${order.store_item?.id || '-'}</span><br>
-                            <span>Getränk: ${order.drink ? order.drink.name + ' (' + order.drink.size + ')' : '-'}</span>
+
+                ordersContainer.innerHTML = '';
+                if (Array.isArray(listData.orders) && listData.orders.length > 0) {
+                    listData.orders.forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'order-card';
+
+                        const itemDetails = allItemsMap.get(order.store_item.id);
+                        const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
+
+                        let drinkHtml = '<span class="name">-</span>';
+                        if (order.drink) {
+                            drinkHtml = `<span class="name">${order.drink.name}</span>`;
+                        }
+
+                        let extrasHtml = '';
+                        const variants = order.store_item.variants || [];
+                        const dips = order.store_item.dips || [];
+                        if (variants.length > 0 || dips.length > 0) {
+                            extrasHtml = '<ul class="order-extras-list">';
+                            variants.forEach(v => extrasHtml += `<li>${v}</li>`);
+                            dips.forEach(d => extrasHtml += `<li>${d}</li>`);
+                            extrasHtml += '</ul>';
+                        }
+                        
+                        const orderDate = new Date(order.created);
+                        orderCard.innerHTML = `
+                            <div class="order-header">
+                                <strong>${order.creator}</strong>
+                                <span class="timestamp">${orderDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
+                            </div>
+                            <div class="order-body">
+                                <div class="order-item">
+                                    <span class="type">Speise:</span>
+                                    <span class="name">${itemName}</span>
+                                    ${extrasHtml}
+                                </div>
+                                <div class="order-item">
+                                     <span class="type">Getränk:</span>
+                                     ${drinkHtml}
+                                </div>
+                            </div>
                         `;
-                        listenList.appendChild(orderDiv);
+                        ordersContainer.appendChild(orderCard);
                     });
                 } else {
-                    listenList.innerHTML += "<p>Keine Bestellungen vorhanden.</p>";
+                    ordersContainer.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
                 }
             })
             .catch(err => {
-                listenList.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste.</p>";
+                console.error("Fehler:", err);
+                ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste. Läuft der Server?</p>";
             });
+        }
+
+        loadAndRenderList();
+        setInterval(loadAndRenderList, 5000);
     </script>
 </body>
 </html>

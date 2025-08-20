@@ -8,7 +8,7 @@ type DrinkSize int
 
 const (
 	DrinkSizeSmall DrinkSize = 0
-	DrinkSizeLarge           = 1
+	DrinkSizeLarge DrinkSize = 1
 )
 
 type OrderList struct {

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestellung erfolgreich!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="checkout-card">
+            <svg class="checkmark-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h2>Danke für deine Bestellung!</h2>
+            <p>Du kannst den Status deiner Bestellung und die aller anderen auf der Übersichtsseite verfolgen. Teile den Link mit deinen Freunden!</p>
+
+            <a href="#" id="summaryLinkBtn" class="link-btn">Zur Bestellübersicht</a>
+            <br>
+            <a href="liste.html" id="backLink" class="link-secondary">Weitere Bestellung aufgeben</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const summaryLinkBtn = document.getElementById('summaryLinkBtn');
+            const backLink = document.getElementById('backLink');
+
+            const params = new URLSearchParams(window.location.search);
+            const listId = params.get('id');
+
+            if (listId) {
+                // Erstellt die volle URL zur Übersichtsseite
+                const summaryUrl = `${window.location.origin}${window.location.pathname.replace('checkout.html', 'listen.html')}?id=${listId}`;
+                
+                // Setzt den Link für den neuen Haupt-Button
+                summaryLinkBtn.href = summaryUrl;
+
+                // Setzt den Link für den sekundären Zurück-Link
+                backLink.href = `liste.html?id=${listId}`;
+            } else {
+                summaryLinkBtn.textContent = "Fehler: Link konnte nicht erstellt werden";
+                summaryLinkBtn.style.backgroundColor = "#999";
+                summaryLinkBtn.style.pointerEvents = "none";
+            }
+        });
+    </script>
+</body>
+</html>

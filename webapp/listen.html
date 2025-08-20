@@ -12,15 +12,42 @@
             <h2>Bestellübersicht</h2>
             <div id="listInfo"><p>Lade Listen-Details...</p></div>
         </div>
-        <div class="orders-container" id="ordersContainer">
-            <p>Lade Bestellungen...</p>
+        
+        <div class="page-content">
+            <div class="summary-container" id="summaryContainer">
+                <h3>Zusammenfassung</h3>
+                <div id="summaryList"></div>
+            </div>
+
+            <details class="details-accordion" id="detailsAccordion" style="display: none;">
+                <summary>Alle einzelnen Bestellungen anzeigen</summary>
+                <div class="orders-container" id="ordersContainer"></div>
+            </details>
         </div>
     </div>
     <script>
         const listInfoDiv = document.getElementById('listInfo');
         const ordersContainer = document.getElementById('ordersContainer');
+        const summaryListDiv = document.getElementById('summaryList');
+        const detailsAccordion = document.getElementById('detailsAccordion');
         const params = new URLSearchParams(window.location.search);
         const listId = params.get('id');
+
+        function setupScrollAnimations(container) {
+            const itemsToAnimate = container.querySelectorAll('.summary-card, .order-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transitionDelay = `${index * 50}ms`;
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            itemsToAnimate.forEach(item => observer.observe(item));
+        }
 
         function loadAndRenderList() {
             if (!listId) {
@@ -52,19 +79,34 @@
                 `;
 
                 ordersContainer.innerHTML = '';
+                summaryListDiv.innerHTML = '';
+                
                 if (Array.isArray(listData.orders) && listData.orders.length > 0) {
-                    listData.orders.forEach(order => {
-                        const orderCard = document.createElement('div');
-                        orderCard.className = 'order-card';
+                    detailsAccordion.style.display = 'block';
+                    const orderSummary = new Map();
 
+                    listData.orders.forEach(order => {
+                        const variants = (order.store_item.variants || []).sort().join(',');
+                        const dips = (order.store_item.dips || []).sort().join(',');
+                        const drinkName = order.drink ? order.drink.name : 'kein-getraenk';
+                        const orderKey = `${order.store_item.id}|${variants}|${dips}|${drinkName}`;
+                        if (orderSummary.has(orderKey)) {
+                            const existing = orderSummary.get(orderKey);
+                            existing.count++;
+                            existing.creators.push(order.creator);
+                        } else {
+                            orderSummary.set(orderKey, {
+                                count: 1, creators: [order.creator], orderDetails: order
+                            });
+                        }
+                    });
+
+                    orderSummary.forEach(summary => {
+                        const order = summary.orderDetails;
                         const itemDetails = allItemsMap.get(order.store_item.id);
                         const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
-
                         let drinkHtml = '<span class="name">-</span>';
-                        if (order.drink) {
-                            drinkHtml = `<span class="name">${order.drink.name}</span>`;
-                        }
-
+                        if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
                         let extrasHtml = '';
                         const variants = order.store_item.variants || [];
                         const dips = order.store_item.dips || [];
@@ -74,39 +116,65 @@
                             dips.forEach(d => extrasHtml += `<li>${d}</li>`);
                             extrasHtml += '</ul>';
                         }
-                        
+                        const summaryCard = document.createElement('div');
+                        summaryCard.className = 'summary-card';
+                        summaryCard.innerHTML = `
+                            <div class="summary-header">
+                                <div class="summary-count">${summary.count}x</div>
+                                <strong>${itemName}</strong>
+                            </div>
+                            <div class="order-body">
+                                ${extrasHtml ? `<div class="order-item">${extrasHtml}</div>` : ''}
+                                <div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div>
+                                <div class="order-item"><span class="type">Bestellt von:</span> <span class="name">${summary.creators.join(', ')}</span></div>
+                            </div>
+                        `;
+                        summaryListDiv.appendChild(summaryCard);
+                    });
+
+                    listData.orders.forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'order-card';
                         const orderDate = new Date(order.created);
+                        const itemDetails = allItemsMap.get(order.store_item.id);
+                        const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
+                        let drinkHtml = '<span class="name">-</span>';
+                        if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
+                        let extrasHtml = '';
+                        const variants = order.store_item.variants || [];
+                        const dips = order.store_item.dips || [];
+                        if (variants.length > 0 || dips.length > 0) {
+                            extrasHtml = '<ul class="order-extras-list">';
+                            variants.forEach(v => extrasHtml += `<li>${v}</li>`);
+                            dips.forEach(d => extrasHtml += `<li>${d}</li>`);
+                            extrasHtml += '</ul>';
+                        }
                         orderCard.innerHTML = `
                             <div class="order-header">
                                 <strong>${order.creator}</strong>
-                                <span class="timestamp">${orderDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
+                                <span class="timestamp">${orderDate.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span>
                             </div>
                             <div class="order-body">
-                                <div class="order-item">
-                                    <span class="type">Speise:</span>
-                                    <span class="name">${itemName}</span>
-                                    ${extrasHtml}
-                                </div>
-                                <div class="order-item">
-                                     <span class="type">Getränk:</span>
-                                     ${drinkHtml}
-                                </div>
+                                <div class="order-item"><span class="type">Speise:</span> <span class="name">${itemName}</span>${extrasHtml}</div>
+                                <div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div>
                             </div>
                         `;
                         ordersContainer.appendChild(orderCard);
                     });
+                    
+                    setupScrollAnimations(summaryListDiv);
+                    setupScrollAnimations(ordersContainer);
+
                 } else {
-                    ordersContainer.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
+                    summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
+                    detailsAccordion.style.display = 'none';
                 }
             })
-            .catch(err => {
-                console.error("Fehler:", err);
-                ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste. Läuft der Server?</p>";
-            });
+            .catch(err => { console.error("Fehler:", err); });
         }
 
         loadAndRenderList();
-        setInterval(loadAndRenderList, 5000);
+        setInterval(loadAndRenderList, 60000);
     </script>
 </body>
 </html>

@@ -10,25 +10,39 @@
     --border-color-selected: var(--primary-color);
 }
 
+/* --- Seiten-Layout --- */
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--background-light);
     color: var(--text-dark);
-    margin: 0;
+    display: flex;
+    flex-direction: column;
     padding: 20px;
+    box-sizing: border-box;
 }
 
-/* --- Hauptcontainer & Layout --- */
 .container {
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
 }
 
 .menu-wrapper {
     display: grid;
     grid-template-columns: 1fr;
     gap: 30px;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 @media (min-width: 960px) {
@@ -42,8 +56,9 @@ body {
     border-radius: 16px;
     padding: 25px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    max-height: 85vh;
 }
 
 .category-header {
@@ -61,6 +76,7 @@ body {
     color: var(--text-dark);
 }
 
+/* --- Suche & Scroll-Container --- */
 .search-input {
     width: 100%;
     padding: 10px 15px;
@@ -72,9 +88,10 @@ body {
 
 .items-list {
     overflow-y: auto;
-    max-height: 65vh;
     padding-right: 15px;
     margin-right: -15px;
+    min-height: 0;
+    padding-bottom: 220px;
 }
 
 /* --- Item-Buttons --- */
@@ -88,6 +105,12 @@ body {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     margin-bottom: 15px;
+    opacity: 0;
+    transform: translateY(20px);
+}
+.item-button.is-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .item-button:hover {
@@ -116,18 +139,15 @@ body {
     overflow: hidden;
     transition: max-height 0.4s ease-in-out, margin-top 0.4s ease-in-out;
 }
-
 .item-button.expanded .item-options {
     max-height: 600px;
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px dashed var(--border-color);
 }
-
 .options-group { margin-bottom: 15px; }
 .options-group h5 { margin: 0 0 10px; }
 .options-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-
 .option-button {
     background: #f9fafb;
     border: 1px solid var(--border-color);
@@ -136,21 +156,32 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .option-button.selected {
     background-color: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
 }
 
-/* --- Abschlussbereich --- */
+/* --- Abschlussbereich (schwebend) --- */
 .submission-card {
-    background: var(--card-background);
-    border-radius: 16px;
-    padding: 25px;
-    margin-top: 30px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    z-index: 100;
+    padding: 15px 25px 20px 25px;
+    animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+.submission-card h3 { margin-top: 0; }
 .submission-card input[type="text"] {
     width: 100%;
     padding: 12px;
@@ -170,9 +201,10 @@ body {
     border-top: 1px solid var(--border-color);
 }
 .total-price span { color: var(--primary-color); }
-
 .btn {
     background-color: var(--primary-color);
+    color: white;
+    border: none;
     border-radius: 8px;
     font-size: 1.1em;
     font-weight: 600;
@@ -180,42 +212,108 @@ body {
     padding: 15px 0;
     cursor: pointer;
     transition: background-color 0.2s;
-    border: none;
-    color: white;
 }
 .btn:hover { background-color: var(--primary-color-dark); }
 
-/* --- NEU: Stile für listen.html (Bestellübersicht) --- */
-.list-header {
-    background-color: var(--card-background);
+.link-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 500;
+    width: 100%;
+    padding: 18px 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+.link-btn:hover { background-color: var(--primary-color-dark); }
+
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Stile für listen.html & checkout.html --- */
+.list-header, .checkout-card {
+    background: var(--card-background);
     border-radius: 16px;
     padding: 20px 25px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
 }
+.list-header {
+    position: sticky;
+    top: 20px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
 .list-header h2 { margin-top: 0; }
+.list-header p { color: var(--text-light); }
 
-.orders-container {
+.page-content {
+    padding-top: 10px;
     overflow-y: auto;
-    max-height: 70vh; /* Sorgt dafür, dass die Liste scrollbar wird */
-    padding: 5px;
+    height: 100%;
 }
 
-.order-card {
+.summary-card, .order-card {
     background: var(--card-background);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
 }
+.summary-card.is-visible, .order-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+.summary-count {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.summary-header strong { font-size: 1.2em; }
+
+.details-accordion summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+.details-accordion summary:hover { background-color: #f3f4f6; }
+.details-accordion[open] summary { background-color: #fffbeb; }
 
 .order-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
 }
 .order-header strong { font-size: 1.2em; color: var(--text-dark); }
 .order-header .timestamp { font-size: 0.9em; color: var(--text-light); }
@@ -226,14 +324,40 @@ body {
 
 .order-extras-list {
     list-style-type: none;
-    padding-left: 20px;
-    margin: 5px 0 0 0;
+    padding-left: 20px; margin: 5px 0 0 0;
 }
-.order-extras-list li {
-    font-size: 0.9em;
+.order-extras-list li { font-size: 0.9em; color: var(--text-light); }
+.order-extras-list li::before { content: "› "; color: var(--primary-color); }
+
+.checkout-card {
+    margin-top: 50px;
+    text-align: center;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.checkout-card h2 { font-size: 2em; margin: 15px 0 10px; }
+.checkout-card p { color: var(--text-light); line-height: 1.6; margin-bottom: 30px; }
+.link-box-checkout { display: flex; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px; margin-bottom: 20px; }
+.link-box-checkout input { flex-grow: 1; border: none; background: transparent; font-size: 0.9em; font-family: monospace; color: var(--text-dark); padding: 0 10px; }
+.btn-copy { background-color: var(--primary-color); color: white; border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-weight: 600; transition: background-color 0.2s; }
+.btn-copy:hover { background-color: var(--primary-color-dark); }
+.checkmark-icon { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 3; stroke: var(--primary-color); stroke-miterlimit: 10; margin: 10px auto; box-shadow: inset 0px 0px 0px var(--primary-color); animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+.checkmark-circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3; stroke-miterlimit: 10; stroke: var(--primary-color); fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+.checkmark-check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+@keyframes stroke { 100% { stroke-dashoffset: 0; } }
+@keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+@keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px var(--primary-color); } }
+
+.link-secondary {
+    display: inline-block;
+    margin-top: 20px;
     color: var(--text-light);
+    text-decoration: underline;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
 }
-.order-extras-list li::before {
-    content: "› ";
+.link-secondary:hover {
     color: var(--primary-color);
 }

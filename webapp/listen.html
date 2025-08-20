@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alle Listen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Alle Listen</h2>
+        <div id="listenList"></div>
+    </div>
+    <script>
+        const listenList = document.getElementById('listenList');
+        const params = new URLSearchParams(window.location.search);
+        const groupId = params.get('id'); 
+
+        fetch(`http://localhost:8080/api/lists/${groupId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data || !data.id) {
+                    listenList.innerHTML = "<p>Keine Liste gefunden.</p>";
+                    return;
+                }
+                listenList.innerHTML = `
+                    <strong>Listen-ID:</strong> ${data.id}<br>
+                    <span style="font-size:0.95em;color:#555;">Erstellt: ${data.created}</span><br>
+                    <h3>Bestellungen:</h3>
+                `;
+                if (Array.isArray(data.orders) && data.orders.length > 0) {
+                    data.orders.forEach(order => {
+                        const orderDiv = document.createElement('div');
+                        orderDiv.className = 'item';
+                        orderDiv.innerHTML = `
+                            <strong>${order.creator}</strong> <br>
+                            <span>${order.created}</span><br>
+                            <span>Speise: ${order.store_item?.id || '-'}</span><br>
+                            <span>Getränk: ${order.drink ? order.drink.name + ' (' + order.drink.size + ')' : '-'}</span>
+                        `;
+                        listenList.appendChild(orderDiv);
+                    });
+                } else {
+                    listenList.innerHTML += "<p>Keine Bestellungen vorhanden.</p>";
+                }
+            })
+            .catch(err => {
+                listenList.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste.</p>";
+            });
+    </script>
+</body>
+</html>

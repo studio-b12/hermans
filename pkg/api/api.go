@@ -24,7 +24,7 @@ func New(ctl Controller, addr string) *API {
 		server: server,
 	}
 
-	mux.HandleFunc("OPTIONS /", t.setCORSHeader)
+	mux.HandleFunc("OPTIONS /", t.handleOptions)
 	mux.HandleFunc("GET /api/items", multiHandler(t.setCORSHeader, t.handleGetStoreItems))
 	mux.HandleFunc("POST /api/lists", multiHandler(t.setCORSHeader, t.handleCreateOrderList))
 	mux.HandleFunc("GET /api/lists/{id}", multiHandler(t.setCORSHeader, t.handleGetOrderList))
@@ -36,6 +36,11 @@ func New(ctl Controller, addr string) *API {
 
 func (t *API) Start() error {
 	return t.server.ListenAndServe()
+}
+
+func (t *API) handleOptions(w http.ResponseWriter, r *http.Request) {
+	t.setCORSHeader(w, r)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (t *API) handleGetStoreItems(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +68,8 @@ func (t *API) handleGetOrderList(w http.ResponseWriter, r *http.Request) {
 
 	list, err := t.ctl.GetOrders(orderListId)
 	if err != nil {
-		respondErr(w, err)
+		// Prüfe, ob die Liste nicht gefunden wurde und gib 404 zurück
+		http.Error(w, "Liste nicht gefunden", http.StatusNotFound)
 		return
 	}
 
@@ -103,5 +109,5 @@ func (t *API) handleDeleteOrderList(w http.ResponseWriter, r *http.Request) {
 func (t *API) setCORSHeader(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 }

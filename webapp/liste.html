@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ihre Liste</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="top-url-display" style="margin-bottom: 30px;">
+            <input type="text" id="generatedLink" readonly style="flex:1; border:none; background:transparent; font-size:1em; font-family:monospace; color:#d97706; font-weight:bold; width:320px;">
+            <svg id="copyBtn" class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="7" y="7" width="10" height="10" rx="2" fill="#d97706"/>
+                <rect x="3" y="3" width="10" height="10" rx="2" fill="#fbbf24" opacity="0.7"/>
+            </svg>
+            <span id="copyFeedback" style="margin-left:8px; color:green; font-size:0.95em; display:none;">Kopiert!</span>
+        </div>
+
+        <div class="menu-wrapper">
+
+            <div class="category-card">
+                <h2 class="category-title">SPEISEN</h2>
+                <form id="speisenForm">
+                    <div class="items-list" id="speisen-list"></div>
+                    <h3 style="margin-top:24px;">Name</h3>
+                    <input type="text" id="bestellerName" name="bestellerName" placeholder="Ihr Name" style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" required>
+                    <button type="submit" class="btn" style="margin-top:20px;">Bestellung abschicken</button>
+                    <p id="speisenError" style="color:red;display:none;margin-top:10px;">Bitte wähle mindestens eine Speise, ein Getränk und gib deinen Namen ein.</p>
+                </form>
+            </div>
+
+            <div class="category-card">
+                <h2 class="category-title">GETRÄNKE</h2>
+                <div class="items-list" id="getraenke-list"></div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script>
+        const generatedLinkInput = document.getElementById('generatedLink');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyFeedback = document.getElementById('copyFeedback');
+        const params = new URLSearchParams(window.location.search);
+        const listId = params.get('id');
+
+        if (listId) {
+            const newUrl = `http://127.0.0.1/lists/${listId}`;
+            generatedLinkInput.value = newUrl;
+        } else {
+            generatedLinkInput.value = "Fehler: keine Listen-ID gefunden";
+        }
+
+        copyBtn.addEventListener('click', () => {
+            if (generatedLinkInput.value) {
+                navigator.clipboard.writeText(generatedLinkInput.value).then(() => {
+                    copyFeedback.style.display = 'inline';
+                    setTimeout(() => copyFeedback.style.display = 'none', 1200);
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const getraenkeList = document.getElementById('getraenke-list');
+            const speisenList = document.getElementById('speisen-list');
+            const speisenForm = document.getElementById('speisenForm');
+            const speisenError = document.getElementById('speisenError');
+            const bestellerName = document.getElementById('bestellerName');
+            const apiUrl = 'http://127.0.0.1:8080/api/items';
+
+            let selectedSpeise = null;
+            let selectedExtras = {};
+            let selectedGetraenk = null;
+
+            function createSelectButton(text, selected, extraClass = "") {
+                return `<button type="button" class="select-btn${selected ? " selected" : ""} ${extraClass}">${text}</button>`;
+            }
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => { 
+                    getraenkeList.innerHTML = '';
+                    speisenList.innerHTML = '';
+
+                    if (data.categories && Array.isArray(data.categories)) {
+                        data.categories.forEach(category => {
+                            if (Array.isArray(category.items)) {
+                                category.items.forEach((item, idx) => {
+                                    const itemId = item.id;
+                                    const itemDiv = document.createElement('div');
+                                    itemDiv.classList.add('item');
+                                    itemDiv.dataset.itemId = itemId;
+                                    itemDiv.innerHTML = `
+                                        <div>
+                                            <h4 style="margin:0;">${item.title}</h4>
+                                            <p style="margin:0;">${item.description}</p>
+                                            <div class="item-price">${item.price}</div>
+                                        </div>
+                                        <div class="speise-btn-wrapper" style="margin-top:8px;">
+                                            ${createSelectButton("Auswählen", false, "speise-btn")}
+                                        </div>
+                                        <div class="extras" style="margin-left:0;margin-top:5px;">
+                                            ${item.extras && Array.isArray(item.extras) ? item.extras.map((extra, eidx) => `
+                                                ${createSelectButton(extra, false, "extra-btn")}
+                                            `).join('') : ''}
+                                        </div>
+                                    `;
+                                    speisenList.appendChild(itemDiv);
+                                });
+                            }
+                        });
+                    }
+
+                    if (data.drinks && Array.isArray(data.drinks)) {
+                        data.drinks.forEach((drink, idx) => {
+                            const drinkId = drink.id || drink.name;
+                            const drinkDiv = document.createElement('div');
+                            drinkDiv.classList.add('item');
+                            drinkDiv.dataset.drinkId = drinkId;
+                            drinkDiv.innerHTML = `
+                                <div class="item-details">
+                                    <h4>${drink.name}</h4>
+                                    <p>${drink.description}</p>
+                                </div>
+                                <div class="item-price">${drink.price}</div>
+                                <div class="getraenk-btn-wrapper" style="margin-top:8px;">
+                                    ${createSelectButton("Auswählen", false, "getraenk-btn")}
+                                </div>
+                            `;
+                            getraenkeList.appendChild(drinkDiv);
+                        });
+                    }
+
+                    speisenList.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('speise-btn')) {
+                            // Alle Buttons zurücksetzen
+                            speisenList.querySelectorAll('.speise-btn').forEach(btn => btn.classList.remove('selected'));
+                            const itemDiv = e.target.closest('.item');
+                            selectedSpeise = itemDiv.dataset.itemId;
+                            e.target.classList.add('selected');
+                        }
+                        if (e.target.classList.contains('extra-btn')) {
+                            const itemDiv = e.target.closest('.item');
+                            const itemId = itemDiv.dataset.itemId;
+                            const extraName = e.target.textContent;
+                            if (!selectedExtras[itemId]) selectedExtras[itemId] = [];
+                            if (selectedExtras[itemId].includes(extraName)) {
+                                selectedExtras[itemId] = selectedExtras[itemId].filter(ex => ex !== extraName);
+                                e.target.classList.remove('selected');
+                            } else {
+                                selectedExtras[itemId].push(extraName);
+                                e.target.classList.add('selected');
+                            }
+                        }
+                    });
+
+                    // GETRÄNKE Button-Logik (nur eine Auswahl möglich)
+                    getraenkeList.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('getraenk-btn')) {
+                            // Alle Buttons zurücksetzen
+                            getraenkeList.querySelectorAll('.getraenk-btn').forEach(btn => btn.classList.remove('selected'));
+                            const drinkDiv = e.target.closest('.item');
+                            selectedGetraenk = drinkDiv.dataset.drinkId;
+                            e.target.classList.add('selected');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden der Items:', error);
+                    speisenList.innerHTML = '<p style="color: red;">Fehler: Menü konnte nicht geladen werden.</p>';
+                });
+
+            speisenForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = bestellerName.value.trim();
+                if (!selectedSpeise || !name) {
+                    speisenError.style.display = 'block';
+                    return;
+                }
+                speisenError.style.display = 'none';
+
+                const variants = [];
+                const dips = [];
+                if (selectedExtras[selectedSpeise]) {
+                    selectedExtras[selectedSpeise].forEach(extra => {
+                        // Beispiel: Unterscheide Dips und Varianten nach Namen
+                        if (extra.toLowerCase().includes('dressing') || extra.toLowerCase().includes('majo') || extra.toLowerCase().includes('dip')) {
+                            dips.push(extra);
+                        } else {
+                            variants.push(extra);
+                        }
+                    });
+                }
+
+                const store_item = {
+                    id: selectedSpeise,
+                    variants: variants,
+                    dips: dips
+                };
+
+                let drink = undefined;
+                if (selectedGetraenk) {
+                    drink = {
+                        name: selectedGetraenk,
+                        size: 1
+                    };
+                }
+
+                const order = {
+                    creator: name,
+                    store_item: store_item
+                };
+                if (drink) {
+                    order.drink = drink;
+                }
+
+                console.log('Order wird gesendet:', order);
+
+                fetch(`http://localhost:8080/api/lists/${listId}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Bestellung fehlgeschlagen');
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Bestellung erfolgreich!');
+                })
+                .catch(error => {
+                    alert('Fehler beim Bestellen: ' + error.message);
+                });
+            });
+        });
+        
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .select-btn {
+                background: #e5e7eb;
+                color: #d97706;
+                border: 2px solid #d97706;
+                border-radius: 6px;
+                padding: 8px 18px;
+                margin: 2px 0;
+                font-size: 1em;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+            .select-btn.selected {
+                background: #d97706;
+                color: #fff;
+            }
+            .select-btn:active {
+                background: #b45309;
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

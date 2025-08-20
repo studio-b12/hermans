@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_4PxJDUn7sF
 createdAt: 2025-08-18T11:21:25.043801
-updatedAt: 2025-08-18T14:07:04.274909056
+updatedAt: 2025-08-20T08:30:21.884175600
 workspaceId: wk_MbGccW82tQ
 folderId: null
 authentication: {}
@@ -37,5 +37,5 @@ headers:
 method: POST
 name: Create order
 sortPriority: -877754335516.9985
-url: ${[ HOST ]}/api/lists/ad9c1621-4bd4-4319-a61b-c7bc686f2f56/orders
+url: ${[ HOST ]}/api/lists/715805ae-b115-4125-aee2-24ac7db769bf/orders
 urlParameters: []

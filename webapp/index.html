@@ -1,13 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/src/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste Erstellen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <button class="btn" id="createListBtn">Liste Erstellen</button>
+
+        <div class="link-section" id="linkSection" style="display: none;">
+            <p id="statusText">Erstell eine Bestellliste</p>
+            <div class="link-box">
+                <input type="text" value="domain.com/{api}/list/abc123de2" id="generatedLink" readonly>
+                <svg id="copyBtn" class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-5zm0 16H8V7h11v14z"/>
+                </svg>
+            </div>
+            <button class="btn" id="continueBtn" disabled>WEITER</button>
+        </div>
+    </div>
+
+    <script>
+        const createListBtn = document.getElementById('createListBtn');
+        const linkSection = document.getElementById('linkSection');
+        const generatedLinkInput = document.getElementById('generatedLink');
+        const continueBtn = document.getElementById('continueBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const statusText = document.getElementById('statusText');
+
+        createListBtn.addEventListener('click', () => {
+            console.log('Button geklickt');
+            createListBtn.disabled = true;
+            createListBtn.textContent = 'Erstelle...';
+
+            fetch('http://localhost:8080/api/lists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Netzwerk-Antwort war nicht ok.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const newListId = data.id; 
+                window.location.href = `liste.html?id=${newListId}`;
+            })
+            .catch(error => {
+                console.error('Fehler beim Erstellen der Liste:', error);
+                statusText.textContent = 'Fehler! Konnte Liste nicht erstellen.';
+                statusText.style.color = 'red';
+                linkSection.style.display = 'block';
+                createListBtn.disabled = false;
+                createListBtn.textContent = 'Erneut versuchen';
+                continueBtn.disabled = true;
+                continueBtn.dataset.url = '';
+                generatedLinkInput.value = '';
+            });
+        });
+
+        continueBtn.addEventListener('click', () => {
+            if (continueBtn.dataset.url) {
+                window.location.href = continueBtn.dataset.url;
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (generatedLinkInput.value) {
+                navigator.clipboard.writeText(generatedLinkInput.value).then(() => {
+                    alert('Link kopiert!');
+                });
+            }
+        });
+    </script>
+
+</body>
 </html>

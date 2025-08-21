@@ -55,11 +55,39 @@ func (t *Controller) GetScrapedData() (*scraper.Data, error) {
 		return nil, err
 	}
 
-	if data != nil {
-		return data, nil
+	if data == nil {
+		data, err = t.Scrape()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return t.Scrape()
+	surpriseCat := []*scraper.Category{
+		{
+			Id:   "__etc",
+			Name: "Etc",
+			Items: []*scraper.StoreItem{
+				{
+					Id:          "__surprise",
+					Title:       "🎉 Überrasch mich 🎉",
+					Description: "Die bestellende Person sucht sich etwas für dich aus 😎",
+					Variants: []*scraper.Variant{
+						{
+							Name:        "vegetarisch",
+							Description: "Vegetarisch",
+						},
+						{
+							Name:        "ohne zwiebeln",
+							Description: "one Zwiebeln (wenn vorhanden)",
+						},
+					},
+				},
+			},
+		},
+	}
+	data.Categories = append(surpriseCat, data.Categories...)
+
+	return data, nil
 }
 
 func (t *Controller) CreateOrderList() (*model.OrderList, error) {

@@ -24,6 +24,8 @@ func New(ctl Controller, addr string) *API {
 		server: server,
 	}
 
+	mux.Handle("/", http.FileServer(http.Dir("webapp")))
+
 	mux.HandleFunc("OPTIONS /", t.handleOptions)
 	mux.HandleFunc("GET /api/items", multiHandler(t.setCORSHeader, t.handleGetStoreItems))
 	mux.HandleFunc("POST /api/lists", multiHandler(t.setCORSHeader, t.handleCreateOrderList))

@@ -12,13 +12,39 @@
             <div class="menu-wrapper">
                 <div class="category-card">
                     <div class="category-header"><h2 class="category-title">Speisen</h2></div>
-                    <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
+                    <div class="controls-wrapper">
+                        <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
+                        <div class="sort-dropdown-wrapper">
+                            <button type="button" class="sort-button" data-controls="speisen-sort-menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
+                                <span>Sortieren</span>
+                            </button>
+                            <div class="sort-dropdown-menu" id="speisen-sort-menu">
+                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
+                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
+                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
+                            </div>
+                        </div>
+                    </div>
                     <div class="items-list" id="speisen-list"></div>
                 </div>
 
                 <div class="category-card">
                     <div class="category-header"><h2 class="category-title">Getränke</h2></div>
-                    <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
+                    <div class="controls-wrapper">
+                        <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
+                        <div class="sort-dropdown-wrapper">
+                            <button type="button" class="sort-button" data-controls="getraenke-sort-menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
+                                <span>Sortieren</span>
+                            </button>
+                            <div class="sort-dropdown-menu" id="getraenke-sort-menu">
+                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
+                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
+                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
+                            </div>
+                        </div>
+                    </div>
                     <div class="items-list" id="getraenke-list"></div>
                 </div>
             </div>
@@ -41,32 +67,105 @@
             const totalPriceSpan = document.getElementById('totalPriceSpan');
             const creatorNameInput = document.getElementById('creatorName');
             const formError = document.getElementById('formError');
-
-            const apiUrl = 'http://localhost:8080/api/items';
+            const apiUrl = '/api/items';
             const params = new URLSearchParams(window.location.search);
             const listId = params.get('id');
             
             const itemDataMap = new Map();
+            let allSpeisen = [];
+            let allGetraenke = [];
+            let speisenSortValue = 'default';
+            let getraenkeSortValue = 'default';
+            
             let selection = {
-                storeItemId: null,
-                variants: new Set(),
-                dips: new Set(),
-                drinkName: null,
+                storeItemId: null, variants: new Set(), dips: new Set(), drinkName: null,
             };
 
+            function setupSortDropdowns() {
+                document.querySelectorAll('.sort-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const menuId = button.dataset.controls;
+                        const menu = document.getElementById(menuId);
+                        const isActive = menu.classList.contains('active');
+                        
+                        document.querySelectorAll('.sort-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+                        document.querySelectorAll('.sort-button.active').forEach(b => b.classList.remove('active'));
+
+                        if (!isActive) {
+                           menu.classList.add('active');
+                           button.classList.add('active');
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.sort-dropdown-wrapper').forEach(wrapper => {
+                    wrapper.addEventListener('click', e => e.stopPropagation());
+                });
+
+                document.querySelectorAll('.sort-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const menu = option.closest('.sort-dropdown-menu');
+                        const listId = menu.id.includes('speisen') ? 'speisen-list' : 'getraenke-list';
+                        
+                        if (listId === 'speisen-list') speisenSortValue = option.dataset.value;
+                        else getraenkeSortValue = option.dataset.value;
+                        
+                        menu.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('selected'));
+                        option.classList.add('selected');
+                        
+                        menu.classList.remove('active');
+                        menu.previousElementSibling.classList.remove('active');
+                        
+                        renderItems();
+                    });
+                });
+
+                window.addEventListener('click', () => {
+                    document.querySelectorAll('.sort-dropdown-menu.active').forEach(menu => menu.classList.remove('active'));
+                    document.querySelectorAll('.sort-button.active').forEach(btn => btn.classList.remove('active'));
+                });
+            }
+
+            function renderItems() {
+                const speisenSearchTerm = document.querySelector('[data-controls="speisen-list"]').value.toLowerCase().trim();
+                const getraenkeSearchTerm = document.querySelector('[data-controls="getraenke-list"]').value.toLowerCase().trim();
+
+                const processList = (itemList, searchTerm, sortValue) => {
+                    let processedItems = itemList.filter(item => 
+                        (item.title || item.name).toLowerCase().includes(searchTerm) || 
+                        (item.description || '').toLowerCase().includes(searchTerm)
+                    );
+                    if (sortValue === 'price-asc') processedItems.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+                    else if (sortValue === 'price-desc') processedItems.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+                    
+                    return processedItems;
+                };
+
+                speisenList.innerHTML = '';
+                getraenkeList.innerHTML = '';
+                
+                processList(allSpeisen, speisenSearchTerm, speisenSortValue).forEach(item => speisenList.appendChild(createItemButton(item)));
+                processList(allGetraenke, getraenkeSearchTerm, getraenkeSortValue).forEach(item => getraenkeList.appendChild(createItemButton(item)));
+                
+                setupScrollAnimations(speisenList);
+                setupScrollAnimations(getraenkeList);
+            }
+            
             function parsePrice(priceValue) {
-                if (typeof priceValue !== 'string') return 0;
-                const cleanedString = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
-                const price = parseFloat(cleanedString);
-                return isNaN(price) ? 0 : price;
+                if (typeof priceValue === 'string') {
+                    const cleanedString = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
+                    const price = parseFloat(cleanedString);
+                    return isNaN(price) ? 0 : price;
+                }
+                return typeof priceValue === 'number' ? priceValue : 0;
             }
 
             function parseExtraPrice(text) {
                 if (typeof text !== 'string') return 0;
                 const match = text.match(/\(\+?\s*([0-9,]+)\s*€\)/);
-                if (match && match[1]) {
-                    return parsePrice(match[1]);
-                }
+                if (match && match[1]) return parsePrice(match[1]);
                 return 0;
             }
 
@@ -76,16 +175,14 @@
                 let total = 0;
                 if (selection.storeItemId) {
                     const item = itemDataMap.get(selection.storeItemId);
-                    if (!item) return;
-
-                    total += parsePrice(item.price);
-                    selection.variants.forEach(variantName => {
-                        const variant = item.variants?.find(v => v.name === variantName);
-                        if (variant) total += parseExtraPrice(variant.description);
-                    });
-                    selection.dips.forEach(dipText => {
-                        total += parseExtraPrice(dipText);
-                    });
+                    if (item) {
+                        total += parsePrice(item.price);
+                        selection.variants.forEach(vName => {
+                            const variant = item.variants?.find(v => v.name === vName);
+                            if (variant) total += parseExtraPrice(variant.description);
+                        });
+                        selection.dips.forEach(dText => total += parseExtraPrice(dText));
+                    }
                 }
                 if (selection.drinkName) {
                     const drink = itemDataMap.get(selection.drinkName);
@@ -106,30 +203,18 @@
                 }</div></div>`;
             }
             
-            function createItemButton(item, type) {
+            function createItemButton(item) {
                 itemDataMap.set(item.id || item.name, item);
-                
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'item-button';
                 button.dataset.id = item.id || item.name;
-                button.dataset.type = type;
-
+                button.dataset.type = item.type;
                 let optionsHTML = '';
-                if (type === 'speise') {
-                    optionsHTML = `<div class="item-options">
-                        ${renderOptionButtons('Varianten', item.variants, 'variant')}
-                        ${renderOptionButtons('Dips', item.dips, 'dip')}
-                    </div>`;
+                if (item.type === 'speise') {
+                    optionsHTML = `<div class="item-options">${renderOptionButtons('Varianten', item.variants, 'variant')}${renderOptionButtons('Dips', item.dips, 'dip')}</div>`;
                 }
-
-                button.innerHTML = `
-                    <div class="item-details">
-                        <h4>${item.title || item.name}</h4>
-                        <p>${item.description}</p>
-                        <div class="price">${item.price}</div>
-                    </div>
-                    ${optionsHTML}`;
+                button.innerHTML = `<div class="item-details"><h4>${item.title || item.name}</h4><p>${item.description}</p><div class="price">${item.price}</div></div>${optionsHTML}`;
                 return button;
             }
 
@@ -137,11 +222,9 @@
                 const target = e.target;
                 const itemButton = target.closest('.item-button');
                 if (!itemButton) return;
-                
                 const id = itemButton.dataset.id;
                 const type = itemButton.dataset.type;
                 const isMainButtonClick = target.closest('.item-details');
-
                 if (isMainButtonClick) {
                     const listContainer = type === 'speise' ? speisenList : getraenkeList;
                     const currentlySelected = listContainer.querySelector('.item-button.selected');
@@ -158,7 +241,6 @@
                         selection.drinkName = itemButton.classList.contains('selected') ? id : null;
                     }
                 }
-
                 const optionButton = target.closest('.option-button');
                 if (optionButton) {
                     const optionType = optionButton.dataset.type;
@@ -178,20 +260,13 @@
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
-                    data.categories?.forEach(cat => cat.items?.forEach(item => speisenList.appendChild(createItemButton(item, 'speise'))));
-                    data.drinks?.forEach(drink => getraenkeList.appendChild(createItemButton(drink, 'getraenk')));
-                    setupScrollAnimations(speisenList);
-                    setupScrollAnimations(getraenkeList);
+                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
+                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
+                    renderItems();
                 });
                 
             document.querySelectorAll('.search-input').forEach(input => {
-                input.addEventListener('input', e => {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-                    const listId = e.target.dataset.controls;
-                    document.getElementById(listId).querySelectorAll('.item-button').forEach(item => {
-                        item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
-                    });
-                });
+                input.addEventListener('input', renderItems);
             });
 
             function setupScrollAnimations(container) {
@@ -216,17 +291,14 @@
                     return;
                 }
                 formError.style.display = 'none';
-
                 const orderPayload = {
                     creator: creator,
                     store_item: { id: selection.storeItemId, variants: Array.from(selection.variants), dips: Array.from(selection.dips) }
                 };
-                
                 if (selection.drinkName) {
                     orderPayload.drink = { name: selection.drinkName };
                 }
-
-                fetch(`http://localhost:8080/api/lists/${listId}/orders`, {
+                fetch(`/api/lists/${listId}/orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderPayload)
@@ -237,6 +309,8 @@
                 })
                 .catch(error => alert('Fehler beim Bestellen: ' + error.message));
             });
+
+            setupSortDropdowns();
         });
     </script>
 </body>

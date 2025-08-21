@@ -14,9 +14,9 @@
                 <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
             <h2>Danke für deine Bestellung!</h2>
-            <p>Du kannst den Status deiner Bestellung und die aller anderen auf der Übersichtsseite verfolgen. Teile den Link mit deinen Freunden!</p>
-
-            <a href="#" id="summaryLinkBtn" class="link-btn">Zur Bestellübersicht</a>
+            <p>Deine Auswahl wurde zur Liste hinzugefügt. Du kannst den Status aller Bestellungen über den folgenden Link verfolgen. Teile ihn mit deinen Freunden!</p>
+            
+            <a href="#" id="summaryLinkBtn" class="btn">Zur Bestellübersicht</a>
             <br>
             <a href="liste.html" id="backLink" class="link-secondary">Weitere Bestellung aufgeben</a>
         </div>
@@ -34,7 +34,6 @@
                 const summaryUrl = `${window.location.origin}${window.location.pathname.replace('checkout.html', 'listen.html')}?id=${listId}`;
                 
                 summaryLinkBtn.href = summaryUrl;
-
                 backLink.href = `liste.html?id=${listId}`;
             } else {
                 summaryLinkBtn.textContent = "Fehler: Link konnte nicht erstellt werden";

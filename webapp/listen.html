@@ -15,12 +15,17 @@
         
         <div class="page-content">
             <div class="summary-grid">
-                <div class="summary-container" id="foodSummaryContainer">
-                    <h3>Speisen-Zusammenfassung</h3>
+                <div class="summary-container">
+                    <div class="category-header">
+                        <h3>Speisen-Zusammenfassung</h3>
+                    </div>
                     <div id="summaryList"></div>
                 </div>
-                <div class="summary-container" id="drinkSummaryContainer">
-                    <h3>Getränke-Zusammenfassung</h3>
+                <div class="summary-container">
+                    <div class="category-header">
+                        <h3>Getränke-Zusammenfassung</h3>
+                        <button type="button" class="btn-copy" id="copyDrinksBtn">Liste kopieren</button>
+                    </div>
                     <div id="drinkSummaryList"></div>
                 </div>
             </div>
@@ -36,12 +41,60 @@
         const ordersContainer = document.getElementById('ordersContainer');
         const summaryListDiv = document.getElementById('summaryList');
         const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
+        const copyDrinksBtn = document.getElementById('copyDrinksBtn');
         const detailsAccordion = document.getElementById('detailsAccordion');
         const params = new URLSearchParams(window.location.search);
         const listId = params.get('id');
+        
+        let isInitialLoad = true;
+        let drinkSummary = new Map();
+
+        // --- SPEICHER-LOGIK ---
+        function saveCheckedState() {
+            const storageKey = `checkedItems_${listId}`;
+            const checkedCards = document.querySelectorAll('.summary-card.is-checked-off');
+            const checkedKeys = Array.from(checkedCards).map(card => card.dataset.key);
+            localStorage.setItem(storageKey, JSON.stringify(checkedKeys));
+        }
+
+        function applyCheckedState() {
+            const storageKey = `checkedItems_${listId}`;
+            const savedKeys = localStorage.getItem(storageKey);
+            if (savedKeys) {
+                const checkedKeys = new Set(JSON.parse(savedKeys));
+                document.querySelectorAll('.summary-card[data-key]').forEach(card => {
+                    if (checkedKeys.has(card.dataset.key)) {
+                        card.classList.add('is-checked-off');
+                    }
+                });
+            }
+        }
+
+        summaryListDiv.addEventListener('click', (e) => {
+            const card = e.target.closest('.summary-card');
+            if (card && card.dataset.key) { // Stelle sicher, dass nur Speisen-Karten klickbar sind
+                card.classList.toggle('is-checked-off');
+                saveCheckedState();
+            }
+        });
+
+        copyDrinksBtn.addEventListener('click', () => {
+            if (drinkSummary.size > 0) {
+                const drinkLines = [];
+                drinkSummary.forEach((count, name) => {
+                    drinkLines.push(`- ${count}x ${name}`);
+                });
+                const clipboardText = drinkLines.join('\n');
+                
+                navigator.clipboard.writeText(clipboardText).then(() => {
+                    copyDrinksBtn.textContent = 'Kopiert!';
+                    setTimeout(() => { copyDrinksBtn.textContent = 'Liste kopieren'; }, 2000);
+                });
+            }
+        });
 
         function setupScrollAnimations(container) {
-            const itemsToAnimate = container.querySelectorAll('.summary-card, .order-card');
+            const itemsToAnimate = container.querySelectorAll('.summary-card:not(.is-visible), .order-card:not(.is-visible)');
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry, index) => {
                     if (entry.isIntersecting) {
@@ -55,10 +108,7 @@
         }
 
         function loadAndRenderList() {
-            if (!listId) {
-                ordersContainer.innerHTML = "<p style='color:red;'>Fehler: Keine Listen-ID in der URL gefunden.</p>";
-                return;
-            }
+            if (!listId) { return; }
 
             const listUrl = `/api/lists/${listId}`;
             const itemsUrl = '/api/items';
@@ -68,38 +118,38 @@
                 fetch(itemsUrl).then(res => res.json())
             ])
             .then(([listData, itemsData]) => {
-                
                 const allItemsMap = new Map();
                 if (itemsData?.categories) {
-                    itemsData.categories.forEach(cat => cat.items?.forEach(item => allItemsMap.set(item.id, item)));
+                    itemsData.categories.forEach(cat => {
+                        cat.items?.forEach(item => {
+                            allItemsMap.set(item.id, { ...item, category: cat.name });
+                        });
+                    });
                 }
                 if (itemsData?.drinks) {
                     itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
                 }
 
                 const createdDate = new Date(listData.created);
-                listInfoDiv.innerHTML = `
-                    <p style="margin:0; color: var(--text-light);">
-                        <strong>ID:</strong> ${listData.id} | 
-                        <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')}
-                    </p>
-                `;
+                const totalOrders = listData.orders ? listData.orders.length : 0;
+                listInfoDiv.innerHTML = `<p style="margin:0; color: var(--text-light);">
+                    <strong>ID:</strong> ${listData.id} | <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')} | <strong>Bestellungen gesamt:</strong> ${totalOrders}
+                </p>`;
 
-                ordersContainer.innerHTML = '';
                 summaryListDiv.innerHTML = '';
                 drinkSummaryListDiv.innerHTML = '';
+                ordersContainer.innerHTML = '';
                 
                 if (Array.isArray(listData.orders) && listData.orders.length > 0) {
                     detailsAccordion.style.display = 'block';
                     
                     const foodSummary = new Map();
-                    const drinkSummary = new Map();
+                    drinkSummary.clear();
 
                     listData.orders.forEach(order => {
                         const variants = (order.store_item.variants || []).sort().join(',');
                         const dips = (order.store_item.dips || []).sort().join(',');
-                        const drinkNameForFoodKey = order.drink ? order.drink.name : 'kein-getraenk';
-                        const foodKey = `${order.store_item.id}|${variants}|${dips}|${drinkNameForFoodKey}`;
+                        const foodKey = `${order.store_item.id}|${variants}|${dips}`;
                         
                         if (foodSummary.has(foodKey)) {
                             foodSummary.get(foodKey).count++;
@@ -114,12 +164,27 @@
                         }
                     });
 
-                    foodSummary.forEach(summary => {
+                    const sortedFoodSummary = Array.from(foodSummary.entries()).sort((a, b) => {
+                        const itemA = allItemsMap.get(a[1].orderDetails.store_item.id);
+                        const itemB = allItemsMap.get(b[1].orderDetails.store_item.id);
+                        if (!itemA || !itemB) return 0;
+                        return itemA.category.localeCompare(itemB.category);
+                    });
+
+                    let lastCategory = "";
+                    sortedFoodSummary.forEach(([key, summary]) => {
                         const order = summary.orderDetails;
                         const itemDetails = allItemsMap.get(order.store_item.id);
                         const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
-                        let drinkHtml = '<span class="name">-</span>';
-                        if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
+                        
+                        if (itemDetails && itemDetails.category !== lastCategory) {
+                            const categoryHeader = document.createElement('h3');
+                            categoryHeader.className = 'summary-category-subheader';
+                            categoryHeader.textContent = itemDetails.category;
+                            summaryListDiv.appendChild(categoryHeader);
+                            lastCategory = itemDetails.category;
+                        }
+
                         let extrasHtml = '';
                         const variants = order.store_item.variants || [];
                         const dips = order.store_item.dips || [];
@@ -131,6 +196,8 @@
                         }
                         const summaryCard = document.createElement('div');
                         summaryCard.className = 'summary-card';
+                        summaryCard.dataset.key = key;
+                        if (!isInitialLoad) summaryCard.classList.add('is-visible');
                         summaryCard.innerHTML = `
                             <div class="summary-header">
                                 <div class="summary-count">${summary.count}x</div>
@@ -138,7 +205,6 @@
                             </div>
                             <div class="order-body">
                                 ${extrasHtml ? `<div class="order-item">${extrasHtml}</div>` : ''}
-                                <div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div>
                                 <div class="order-item"><span class="type">Bestellt von:</span> <span class="name">${summary.creators.join(', ')}</span></div>
                             </div>
                         `;
@@ -147,13 +213,16 @@
 
                     if (drinkSummary.size > 0) {
                         drinkSummary.forEach((count, name) => {
-                            const drinkItemDiv = document.createElement('div');
-                            drinkItemDiv.className = 'drink-summary-item';
-                            drinkItemDiv.innerHTML = `
-                                <span class="name">${name}</span>
-                                <span class="count">${count}x</span>
-                            `;
-                            drinkSummaryListDiv.appendChild(drinkItemDiv);
+                            const drinkCard = document.createElement('div');
+                            drinkCard.className = 'summary-card';
+                            drinkCard.style.cursor = 'default';
+                            if (!isInitialLoad) drinkCard.classList.add('is-visible');
+                            drinkCard.innerHTML = `
+                                <div class="summary-header">
+                                    <div class="summary-count">${count}x</div>
+                                    <strong>${name}</strong>
+                                </div>`;
+                            drinkSummaryListDiv.appendChild(drinkCard);
                         });
                     } else {
                         drinkSummaryListDiv.innerHTML = "<p>Keine Getränke bestellt.</p>";
@@ -162,6 +231,7 @@
                     listData.orders.forEach(order => {
                         const orderCard = document.createElement('div');
                         orderCard.className = 'order-card';
+                        if (!isInitialLoad) orderCard.classList.add('is-visible');
                         const orderDate = new Date(order.created);
                         const itemDetails = allItemsMap.get(order.store_item.id);
                         const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
@@ -189,20 +259,28 @@
                         ordersContainer.appendChild(orderCard);
                     });
                     
-                    setupScrollAnimations(summaryListDiv);
-                    setupScrollAnimations(ordersContainer);
+                    applyCheckedState();
+                    
+                    if (isInitialLoad) {
+                        setupScrollAnimations(summaryListDiv);
+                        setupScrollAnimations(drinkSummaryListDiv);
+                        setupScrollAnimations(ordersContainer);
+                    }
 
                 } else {
                     summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
-                    drinkSummaryListDiv.innerHTML = "";
                     detailsAccordion.style.display = 'none';
                 }
+                isInitialLoad = false;
             })
-            .catch(err => { console.error("Fehler:", err); });
+            .catch(err => { 
+                console.error("Fehler:", err);
+                ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste. Läuft der Server und ist unter http://localhost:8080 erreichbar?</p>";
+            });
         }
         
         loadAndRenderList();
-        setInterval(loadAndRenderList, 600000);
+        setInterval(loadAndRenderList, 5000);
     </script>
 </body>
 </html>

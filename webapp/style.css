@@ -1,4 +1,3 @@
-/* --- Globale Stile & Farbvariablen (Orange-Thema) --- */
 :root {
     --primary-color: #d97706;
     --primary-color-dark: #b45309;
@@ -10,7 +9,6 @@
     --border-color-selected: var(--primary-color);
 }
 
-/* --- Seiten-Layout --- */
 html, body {
     height: 100%;
     margin: 0;
@@ -76,7 +74,6 @@ body {
     color: var(--text-dark);
 }
 
-/* --- Suche & Scroll-Container --- */
 .search-input {
     width: 100%;
     padding: 10px 15px;
@@ -94,7 +91,6 @@ body {
     padding-bottom: 220px;
 }
 
-/* --- Item-Buttons --- */
 .item-button {
     background: var(--card-background);
     border: 1px solid var(--border-color);
@@ -133,7 +129,6 @@ body {
     margin-top: 8px;
 }
 
-/* --- Ausklappbare Optionen --- */
 .item-options {
     max-height: 0;
     overflow: hidden;
@@ -162,7 +157,6 @@ body {
     border-color: var(--primary-color);
 }
 
-/* --- Abschlussbereich (schwebend) --- */
 .submission-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
@@ -237,7 +231,6 @@ body {
     to { transform: translateY(0); opacity: 1; }
 }
 
-/* --- Stile für listen.html & checkout.html --- */
 .list-header, .checkout-card {
     background: var(--card-background);
     border-radius: 16px;
@@ -360,4 +353,43 @@ body {
 }
 .link-secondary:hover {
     color: var(--primary-color);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 Spalte auf Mobile */
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+/* 2 Spalten auf größeren Bildschirmen */
+@media (min-width: 960px) {
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.summary-container h3 {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.drink-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #f9fafb;
+}
+
+.drink-summary-item .count {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+.drink-summary-item .name {
+    font-weight: 500;
 }

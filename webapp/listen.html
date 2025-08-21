@@ -14,9 +14,15 @@
         </div>
         
         <div class="page-content">
-            <div class="summary-container" id="summaryContainer">
-                <h3>Zusammenfassung</h3>
-                <div id="summaryList"></div>
+            <div class="summary-grid">
+                <div class="summary-container" id="foodSummaryContainer">
+                    <h3>Speisen-Zusammenfassung</h3>
+                    <div id="summaryList"></div>
+                </div>
+                <div class="summary-container" id="drinkSummaryContainer">
+                    <h3>Getränke-Zusammenfassung</h3>
+                    <div id="drinkSummaryList"></div>
+                </div>
             </div>
 
             <details class="details-accordion" id="detailsAccordion" style="display: none;">
@@ -29,13 +35,13 @@
         const listInfoDiv = document.getElementById('listInfo');
         const ordersContainer = document.getElementById('ordersContainer');
         const summaryListDiv = document.getElementById('summaryList');
+        const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
         const detailsAccordion = document.getElementById('detailsAccordion');
         const params = new URLSearchParams(window.location.search);
         const listId = params.get('id');
 
         function setupScrollAnimations(container) {
             const itemsToAnimate = container.querySelectorAll('.summary-card, .order-card');
-            
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry, index) => {
                     if (entry.isIntersecting) {
@@ -45,7 +51,6 @@
                     }
                 });
             }, { threshold: 0.1 });
-
             itemsToAnimate.forEach(item => observer.observe(item));
         }
 
@@ -65,8 +70,10 @@
             .then(([listData, itemsData]) => {
                 
                 const allItemsMap = new Map();
-                if (itemsData && itemsData.categories && itemsData.drinks) {
+                if (itemsData?.categories) {
                     itemsData.categories.forEach(cat => cat.items?.forEach(item => allItemsMap.set(item.id, item)));
+                }
+                if (itemsData?.drinks) {
                     itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
                 }
 
@@ -80,28 +87,34 @@
 
                 ordersContainer.innerHTML = '';
                 summaryListDiv.innerHTML = '';
+                drinkSummaryListDiv.innerHTML = '';
                 
                 if (Array.isArray(listData.orders) && listData.orders.length > 0) {
                     detailsAccordion.style.display = 'block';
-                    const orderSummary = new Map();
+                    
+                    const foodSummary = new Map();
+                    const drinkSummary = new Map();
 
                     listData.orders.forEach(order => {
                         const variants = (order.store_item.variants || []).sort().join(',');
                         const dips = (order.store_item.dips || []).sort().join(',');
-                        const drinkName = order.drink ? order.drink.name : 'kein-getraenk';
-                        const orderKey = `${order.store_item.id}|${variants}|${dips}|${drinkName}`;
-                        if (orderSummary.has(orderKey)) {
-                            const existing = orderSummary.get(orderKey);
-                            existing.count++;
-                            existing.creators.push(order.creator);
+                        const drinkNameForFoodKey = order.drink ? order.drink.name : 'kein-getraenk';
+                        const foodKey = `${order.store_item.id}|${variants}|${dips}|${drinkNameForFoodKey}`;
+                        
+                        if (foodSummary.has(foodKey)) {
+                            foodSummary.get(foodKey).count++;
+                            foodSummary.get(foodKey).creators.push(order.creator);
                         } else {
-                            orderSummary.set(orderKey, {
-                                count: 1, creators: [order.creator], orderDetails: order
-                            });
+                            foodSummary.set(foodKey, { count: 1, creators: [order.creator], orderDetails: order });
+                        }
+
+                        if (order.drink && order.drink.name) {
+                            const drinkName = order.drink.name;
+                            drinkSummary.set(drinkName, (drinkSummary.get(drinkName) || 0) + 1);
                         }
                     });
 
-                    orderSummary.forEach(summary => {
+                    foodSummary.forEach(summary => {
                         const order = summary.orderDetails;
                         const itemDetails = allItemsMap.get(order.store_item.id);
                         const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
@@ -131,6 +144,20 @@
                         `;
                         summaryListDiv.appendChild(summaryCard);
                     });
+
+                    if (drinkSummary.size > 0) {
+                        drinkSummary.forEach((count, name) => {
+                            const drinkItemDiv = document.createElement('div');
+                            drinkItemDiv.className = 'drink-summary-item';
+                            drinkItemDiv.innerHTML = `
+                                <span class="name">${name}</span>
+                                <span class="count">${count}x</span>
+                            `;
+                            drinkSummaryListDiv.appendChild(drinkItemDiv);
+                        });
+                    } else {
+                        drinkSummaryListDiv.innerHTML = "<p>Keine Getränke bestellt.</p>";
+                    }
 
                     listData.orders.forEach(order => {
                         const orderCard = document.createElement('div');
@@ -167,14 +194,15 @@
 
                 } else {
                     summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
+                    drinkSummaryListDiv.innerHTML = "";
                     detailsAccordion.style.display = 'none';
                 }
             })
             .catch(err => { console.error("Fehler:", err); });
         }
-
+        
         loadAndRenderList();
-        setInterval(loadAndRenderList, 60000);
+        setInterval(loadAndRenderList, 600000);
     </script>
 </body>
 </html>

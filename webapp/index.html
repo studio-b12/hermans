@@ -3,38 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste Erstellen</title>
+    <title>HERMAN's</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <button class="btn" id="createListBtn">Liste Erstellen</button>
-
-        <div class="link-section" id="linkSection" style="display: none;">
-            <p id="statusText">Erstell eine Bestellliste</p>
-            <div class="link-box">
-                <input type="text" value="domain.com/{api}/list/abc123de2" id="generatedLink" readonly>
-                <svg id="copyBtn" class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-5zm0 16H8V7h11v14z"/>
-                </svg>
-            </div>
-            <button class="btn" id="continueBtn" disabled>WEITER</button>
+    <header>
+        <div class="container">
+            <a href="#" class="logo">HERMAN's<span> Liste*</span></a>
+            <nav>
         </div>
-    </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h3 class="logo">Erstelle deine eigene Bestell Liste und teile den Link mit anderen.
+                    <br> Ganz <span>Einfach</span>, <span>Schnell</span> und <span>Übersichtlich</span>!</h3>
+                <button class="btn" id="createListBtn">Liste erstellen</button>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2>So einfach funktioniert's</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        </div>
+                        <h3>1. Liste Erstellen</h3>
+                        <p>Mit nur einem Klick generierst du eine neue, leere Bestellliste und erhältst einen Link.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">
+                             <div id="div1" class="fa"></div>
+                        </div>
+                        <h3>2. Link Teilen</h3>
+                        <p>Sende den Link an alle, die mitbestellen sollen. Jeder kann die Speisekarte sehen und seine eigene Bestellung aufgeben.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <h3>3. Überblick Behalten</h3>
+                        <p>Auf der Übersichtsseite siehst du alle Bestellungen live zusammengefasst – perfekt sortiert und bereit zur Weitergabe.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+function brakechain() {
+  var a;
+  a = document.getElementById("div1");
+  a.innerHTML = "&#xf0c1;";
+  setTimeout(function () {
+      a.innerHTML = "&#xf127;";
+    }, 1000);
+}
+brakechain();
+setInterval(brakechain, 2000);
+</script>
 
     <script>
         const createListBtn = document.getElementById('createListBtn');
-        const linkSection = document.getElementById('linkSection');
-        const generatedLinkInput = document.getElementById('generatedLink');
-        const continueBtn = document.getElementById('continueBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const statusText = document.getElementById('statusText');
 
         createListBtn.addEventListener('click', () => {
-            console.log('Button geklickt');
             createListBtn.disabled = true;
-            createListBtn.textContent = 'Erstelle...';
+            createListBtn.textContent = 'Liste wird erstellt...';
 
             fetch('/api/lists', {
                 method: 'POST',
@@ -54,29 +93,10 @@
             })
             .catch(error => {
                 console.error('Fehler beim Erstellen der Liste:', error);
-                statusText.textContent = 'Fehler! Konnte Liste nicht erstellen.';
-                statusText.style.color = 'red';
-                linkSection.style.display = 'block';
+                alert('Fehler! Konnte Liste nicht erstellen. Läuft der Server?');
                 createListBtn.disabled = false;
-                createListBtn.textContent = 'Erneut versuchen';
-                continueBtn.disabled = true;
-                continueBtn.dataset.url = '';
-                generatedLinkInput.value = '';
+                createListBtn.textContent = 'Jetzt kostenlos Liste erstellen';
             });
-        });
-
-        continueBtn.addEventListener('click', () => {
-            if (continueBtn.dataset.url) {
-                window.location.href = continueBtn.dataset.url;
-            }
-        });
-
-        copyBtn.addEventListener('click', () => {
-            if (generatedLinkInput.value) {
-                navigator.clipboard.writeText(generatedLinkInput.value).then(() => {
-                    alert('Link kopiert!');
-                });
-            }
         });
     </script>
 

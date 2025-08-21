@@ -226,7 +226,7 @@
                     orderPayload.drink = { name: selection.drinkName };
                 }
 
-                fetch(`http://localhost:8080/api/lists/${listId}/orders`, {
+                fetch(`/api/lists/${listId}/orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderPayload)

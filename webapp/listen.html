@@ -55,8 +55,8 @@
                 return;
             }
 
-            const listUrl = `http://localhost:8080/api/lists/${listId}`;
-            const itemsUrl = 'http://localhost:8080/api/items';
+            const listUrl = `/api/lists/${listId}`;
+            const itemsUrl = '/api/items';
 
             Promise.all([
                 fetch(listUrl).then(res => res.json()),

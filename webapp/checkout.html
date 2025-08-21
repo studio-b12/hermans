@@ -31,13 +31,10 @@
             const listId = params.get('id');
 
             if (listId) {
-                // Erstellt die volle URL zur Übersichtsseite
                 const summaryUrl = `${window.location.origin}${window.location.pathname.replace('checkout.html', 'listen.html')}?id=${listId}`;
                 
-                // Setzt den Link für den neuen Haupt-Button
                 summaryLinkBtn.href = summaryUrl;
 
-                // Setzt den Link für den sekundären Zurück-Link
                 backLink.href = `liste.html?id=${listId}`;
             } else {
                 summaryLinkBtn.textContent = "Fehler: Link konnte nicht erstellt werden";

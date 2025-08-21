@@ -36,7 +36,7 @@
             createListBtn.disabled = true;
             createListBtn.textContent = 'Erstelle...';
 
-            fetch('http://localhost:8080/api/lists', {
+            fetch('/api/lists', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

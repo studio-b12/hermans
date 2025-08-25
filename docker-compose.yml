@@ -1,0 +1,26 @@
+services:
+  caddy:
+    image: caddy:latest
+    restart: always
+    volumes:
+      - /etc/caddy:/config
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+
+  hermans:
+    image: ghcr.io/studio-b12/hermans:latest
+    restart: always
+    volumes:
+      - "/var/hermans/db:/var/hermans/db"
+      - "/var/hermans/cache:/var/hermans/cache"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300

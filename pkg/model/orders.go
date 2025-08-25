@@ -34,4 +34,6 @@ type Order struct {
 	Creator   string     `json:"creator" validate:"required"`
 	StoreItem *StoreItem `json:"store_item" validate:"required"`
 	Drink     *Drink     `json:"drink"`
+	// Bearbeiten/ Löschen von Bestellungen
+	EditKey string `json:"-"`
 }

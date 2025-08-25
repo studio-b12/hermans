@@ -10,13 +10,8 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-<<<<<<< HEAD
-	github.com/pressly/goose/v3 v3.24.1
-	github.com/studio-b12/elk v0.4.0
-=======
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/studio-b12/elk v0.5.0
->>>>>>> 1535e582514b88f163f8010e24808c1af2b234d1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 )
 

@@ -1,381 +1,583 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bestellung aufgeben</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bestellung aufgeben</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ---- Modernes, iOS-inspirertes Sidebar Design (right dock) ---- */
+:root {
+  --glass-bg: rgba(255,255,255,0.6);
+  --glass-border: rgba(255,255,255,0.35);
+  --accent: #007aff; /* iOS-blue */
+  --accent-strong: #005ecb;
+  --muted: #6b7280;
+  --card-radius: 16px;
+  --elev: 0 8px 30px rgba(2,6,23,0.12);
+}
+
+/* make sure items become visible by default animation */
+.item-button { opacity: 0; transform: translateY(18px); transition: opacity .36s cubic-bezier(.2,.9,.2,1), transform .36s cubic-bezier(.2,.9,.2,1); }
+.item-button.is-visible { opacity: 1; transform: translateY(0); }
+
+/* Sidebar container (docked right) */
+.last-order-sidebar {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  width: 360px;
+  max-width: calc(100% - 36px);
+  height: calc(100% - 36px);
+  max-height: 840px;
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(12px) saturate(120%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(250,250,250,0.6));
+  box-shadow: var(--elev);
+  border: 1px solid rgba(10,10,10,0.04);
+  overflow: hidden;
+  transform: translateY(8px);
+  transition: transform .28s ease, opacity .24s ease;
+}
+
+/* small collapsed tab when hidden */
+.last-order-tab {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  height: 56px;
+  width: 56px;
+  border-radius: 14px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,245,245,0.85));
+  border: 1px solid rgba(10,10,10,0.05);
+  box-shadow: 0 8px 20px rgba(2,6,23,0.12);
+  cursor: pointer;
+  z-index: 1450;
+}
+
+/* header inside sidebar */
+.last-order-header {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+}
+.last-order-header h3 {
+  margin:0;
+  font-size:1.05rem;
+  font-weight:700;
+  color: #0b1220;
+}
+.last-order-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* content preview */
+.last-order-content {
+  background: rgba(255,255,255,0.65);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(10,10,10,0.03);
+  max-height: 62%;
+  overflow-y: auto;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* nice list items */
+.lo-item {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px;
+  border-radius:10px;
+  align-items:center;
+  transition: background .15s;
+}
+.lo-item + .lo-item { margin-top:8px; }
+.lo-item:hover { background: rgba(0,0,0,0.03); }
+
+/* buttons row (actions) */
+.last-order-actions {
+  display:flex;
+  gap:8px;
+  justify-content:space-between;
+  align-items:center;
+  margin-top: 10px;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(10,10,10,0.06);
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #0b1220;
+}
+.btn-primary {
+  background: linear-gradient(180deg,var(--accent),var(--accent-strong));
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,122,255,0.18);
+}
+
+/* small helper */
+.preview-label { color: var(--muted); font-size: 12px; margin-bottom:6px; }
+
+/* responsive: hide sidebar on very small screens and show floating tab */
+@media (max-width: 900px) {
+  .last-order-sidebar { right: 12px; left: 12px; width: auto; height: 56vh; max-height: 520px; bottom: auto; top: 18px; }
+  .last-order-tab { display: flex; right: 12px; top: 12px; }
+}
+
+/* make sure submission-card doesn't overlap badly */
+@media (min-width: 961px) {
+  .submission-card { max-width: calc(100% - 420px); margin-right: 420px; } /* give space for sidebar */
+}
+</style>
 </head>
 <body class="liste-body">
-    <div class="container">
-        <div class="deadline-display" id="deadlineDisplay" style="display: none;"></div>
-        <form id="orderForm">
-            <div class="menu-wrapper">
-                <div class="category-card">
-                    <div class="category-header"><h2 class="category-title">Speisen</h2></div>
-                    <div class="controls-wrapper">
-                        <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
-                        <div class="sort-dropdown-wrapper">
-                            <button type="button" class="sort-button" data-controls="speisen-sort-menu">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
-                                <span>Sortieren</span>
-                            </button>
-                            <div class="sort-dropdown-menu" id="speisen-sort-menu">
-                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
-                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
-                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="items-list" id="speisen-list"></div>
-                </div>
+  <div class="container">
+    <div class="deadline-display" id="deadlineDisplay" style="display:none;"></div>
 
-                <div class="category-card">
-                    <div class="category-header"><h2 class="category-title">Getränke</h2></div>
-                    <div class="controls-wrapper">
-                        <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
-                        <div class="sort-dropdown-wrapper">
-                            <button type="button" class="sort-button" data-controls="getraenke-sort-menu">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
-                                <span>Sortieren</span>
-                            </button>
-                            <div class="sort-dropdown-menu" id="getraenke-sort-menu">
-                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
-                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
-                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="items-list" id="getraenke-list"></div>
-                </div>
-            </div>
+    <form id="orderForm">
+      <div class="menu-wrapper">
+        <div class="category-card">
+          <div class="category-header"><h2 class="category-title">Speisen</h2></div>
+          <div class="controls-wrapper">
+            <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
+          </div>
+          <div class="items-list" id="speisen-list"></div>
+        </div>
 
-            <div class="submission-card">
-                <h3 id="form-title">Deine Bestellung</h3>
-                <input type="text" id="creatorName" placeholder="Max Mustermann" required>
-                <div class="total-price">Gesamt: <span id="totalPriceSpan">0,00 €</span></div>
-                <button type="submit" class="btn" id="submit-button">Bestellung abschicken</button>
-                <p id="formError" style="color:red;display:none;margin-top:10px;">Bitte wähle mindestens eine Speise und gib deinen Namen ein.</p>
-            </div>
-        </form>
+        <div class="category-card">
+          <div class="category-header"><h2 class="category-title">Getränke</h2></div>
+          <div class="controls-wrapper">
+            <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
+          </div>
+          <div class="items-list" id="getraenke-list"></div>
+        </div>
+      </div>
+
+      <div class="submission-card">
+        <h3 id="form-title">Deine Bestellung</h3>
+        <input type="text" id="creatorName" placeholder="Max Mustermann" required>
+        <div class="total-price">Gesamt: <span id="totalPriceSpan">0,00 €</span></div>
+        <button type="submit" class="btn" id="submit-button">Bestellung abschicken</button>
+        <p id="formError" style="color:red;display:none;margin-top:10px;">Bitte wähle mindestens eine Speise und gib deinen Namen ein.</p>
+      </div>
+    </form>
+  </div>
+
+  <!-- collapsed tab for mobile / hide -->
+  <div class="last-order-tab" id="lastOrderTab" title="Zuletzt bestellt">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden focusable="false">
+      <path d="M3 7a4 4 0 014-4h10a4 4 0 014 4v10a4 4 0 01-4 4H7a4 4 0 01-4-4V7z" stroke="#0b1220" stroke-opacity="0.9" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 11h8M8 15h5" stroke="#0b1220" stroke-opacity="0.9" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- Sidebar for last order -->
+  <aside class="last-order-sidebar" id="lastOrderSidebar" aria-hidden="true">
+    <div class="last-order-header">
+      <h3>Zuletzt bestellt</h3>
+      <button class="last-order-close" id="closeSidebarBtn" aria-label="Schließen">✕</button>
     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const speisenList = document.getElementById('speisen-list');
-            const getraenkeList = document.getElementById('getraenke-list');
-            const orderForm = document.getElementById('orderForm');
-            const totalPriceSpan = document.getElementById('totalPriceSpan');
-            const creatorNameInput = document.getElementById('creatorName');
-            const formError = document.getElementById('formError');
-            const formTitle = document.getElementById('form-title');
-            const submitButton = document.getElementById('submit-button');
-            const deadlineDisplay = document.getElementById('deadlineDisplay');
 
-            const apiUrl = 'http://localhost:8080/api/items';
-            const params = new URLSearchParams(window.location.search);
-            const listId = params.get('id');
-            const orderIdToEdit = params.get('edit');
-            
-            const itemDataMap = new Map();
-            let allSpeisen = [];
-            let allGetraenke = [];
-            let speisenSortValue = 'default';
-            let getraenkeSortValue = 'default';
-            
-            let selection = {
-                storeItemId: null, variants: new Set(), dips: new Set(), drinkName: null,
-            };
+    <div>
+      <div class="preview-label">Vorschau</div>
+      <div class="last-order-content" id="lastOrderContent">Keine Bestellung vorhanden.</div>
+    </div>
 
-            function disableForm(message) {
-                orderForm.querySelectorAll('button, input').forEach(el => el.disabled = true);
-                document.querySelectorAll('.search-input, .sort-button').forEach(el => el.disabled = true);
-                submitButton.textContent = message;
-                formTitle.textContent = "Bestellungen geschlossen";
-            }
+    <div class="last-order-actions">
+      <button class="btn-ghost" id="editLastBtn">Bearbeiten</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-ghost" id="restoreLastBtn">Übernehmen</button>
+        <button class="btn-primary" id="sendLastBtn">Direkt senden</button>
+      </div>
+    </div>
+  </aside>
 
-            function loadAndCheckDeadline() {
-                if (!listId) return;
-                fetch(`http://localhost:8080/api/lists/${listId}`)
-                    .then(res => res.json())
-                    .then(listData => {
-                        if (listData.deadline) {
-                            const deadline = new Date(listData.deadline);
-                            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-                            deadlineDisplay.textContent = `Bestellungen möglich bis: ${deadline.toLocaleString('de-DE', options)} Uhr`;
-                            deadlineDisplay.style.display = 'block';
-                            if (new Date() > deadline) {
-                                deadlineDisplay.textContent += " (Frist abgelaufen)";
-                                deadlineDisplay.style.color = '#dc2626';
-                                deadlineDisplay.style.borderColor = '#fecaca';
-                                deadlineDisplay.style.backgroundColor = '#fee2e2';
-                                disableForm("Bestellfrist abgelaufen");
-                            }
-                        }
-                    });
-            }
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const speisenList = document.getElementById('speisen-list');
+  const getraenkeList = document.getElementById('getraenke-list');
+  const orderForm = document.getElementById('orderForm');
+  const totalPriceSpan = document.getElementById('totalPriceSpan');
+  const creatorNameInput = document.getElementById('creatorName');
+  const formError = document.getElementById('formError');
 
-            function setupSortDropdowns() {
-                document.querySelectorAll('.sort-button').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const menuId = button.dataset.controls;
-                        const menu = document.getElementById(menuId);
-                        const isActive = menu.classList.contains('active');
-                        document.querySelectorAll('.sort-dropdown-menu.active').forEach(m => m.classList.remove('active'));
-                        document.querySelectorAll('.sort-button.active').forEach(b => b.classList.remove('active'));
-                        if (!isActive) {
-                           menu.classList.add('active');
-                           button.classList.add('active');
-                        }
-                    });
-                });
-                document.querySelectorAll('.sort-dropdown-wrapper').forEach(wrapper => {
-                    wrapper.addEventListener('click', e => e.stopPropagation());
-                });
-                document.querySelectorAll('.sort-option').forEach(option => {
-                    option.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const menu = option.closest('.sort-dropdown-menu');
-                        const listId = menu.id.includes('speisen') ? 'speisen-list' : 'getraenke-list';
-                        if (listId === 'speisen-list') speisenSortValue = option.dataset.value;
-                        else getraenkeSortValue = option.dataset.value;
-                        menu.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('selected'));
-                        option.classList.add('selected');
-                        menu.classList.remove('active');
-                        menu.previousElementSibling.classList.remove('active');
-                        renderItems();
-                    });
-                });
-                window.addEventListener('click', () => {
-                    document.querySelectorAll('.sort-dropdown-menu.active').forEach(menu => menu.classList.remove('active'));
-                    document.querySelectorAll('.sort-button.active').forEach(btn => btn.classList.remove('active'));
-                });
-            }
+  const lastOrderSidebar = document.getElementById('lastOrderSidebar');
+  const lastOrderTab = document.getElementById('lastOrderTab');
+  const lastOrderContent = document.getElementById('lastOrderContent');
+  const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+  const restoreLastBtn = document.getElementById('restoreLastBtn');
+  const sendLastBtn = document.getElementById('sendLastBtn');
+  const editLastBtn = document.getElementById('editLastBtn');
 
-            function renderItems() {
-                const speisenSearchTerm = document.querySelector('input[data-controls="speisen-list"]').value.toLowerCase().trim();
-                const getraenkeSearchTerm = document.querySelector('input[data-controls="getraenke-list"]').value.toLowerCase().trim();
-                const processList = (itemList, searchTerm, sortValue) => {
-                    let processedItems = itemList.filter(item => 
-                        (item.title || item.name).toLowerCase().includes(searchTerm) || 
-                        (item.description || '').toLowerCase().includes(searchTerm)
-                    );
-                    if (sortValue === 'price-asc') processedItems.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-                    else if (sortValue === 'price-desc') processedItems.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-                    return processedItems;
-                };
-                speisenList.innerHTML = '';
-                getraenkeList.innerHTML = '';
-                processList(allSpeisen, speisenSearchTerm, speisenSortValue).forEach(item => speisenList.appendChild(createItemButton(item)));
-                processList(allGetraenke, getraenkeSearchTerm, getraenkeSortValue).forEach(item => getraenkeList.appendChild(createItemButton(item)));
-                setupScrollAnimations(speisenList);
-                setupScrollAnimations(getraenkeList);
-            }
-            
-            function parsePrice(priceValue) {
-                if (typeof priceValue === 'string') {
-                    const cleanedString = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
-                    const price = parseFloat(cleanedString);
-                    return isNaN(price) ? 0 : price;
-                }
-                return typeof priceValue === 'number' ? priceValue : 0;
-            }
+  let allSpeisen = [];
+  let allGetraenke = [];
+  const itemDataMap = new Map();
 
-            function parseExtraPrice(text) {
-                if (typeof text !== 'string') return 0;
-                const match = text.match(/\(\+?\s*([0-9,]+)\s*€\)/);
-                if (match && match[1]) return parsePrice(match[1]);
-                return 0;
-            }
+  // selection supports multiple speisen & one drink
+  let selection = { speisen: [], drinks: null };
 
-            const formatPrice = (price) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
-            
-            function updateTotalPrice() {
-                let total = 0;
-                if (selection.storeItemId) {
-                    const item = itemDataMap.get(selection.storeItemId);
-                    if (item) {
-                        total += parsePrice(item.price);
-                        selection.variants.forEach(vName => {
-                            const variant = item.variants?.find(v => v.name === vName);
-                            if (variant) total += parseExtraPrice(variant.description);
-                        });
-                        selection.dips.forEach(dText => {
-                            total += parseExtraPrice(dText);
-                        });
-                    }
-                }
-                if (selection.drinkName) {
-                    const drink = itemDataMap.get(selection.drinkName);
-                    if (drink) total += parsePrice(drink.price);
-                }
-                totalPriceSpan.textContent = formatPrice(total);
-            }
-            
-            function renderOptionButtons(title, options, groupName) {
-                if (!options || options.length === 0) return '';
-                return `<div class="options-group"><h5>${title}</h5><div class="options-grid">${
-                    options.map(option => {
-                        const isString = typeof option === 'string';
-                        const value = isString ? option : option.name;
-                        const text = isString ? option : option.description;
-                        return `<button type="button" class="option-button" data-type="${groupName}" data-value="${value}">${text}</button>`;
-                    }).join('')
-                }</div></div>`;
-            }
-            
-            function createItemButton(item) {
-                itemDataMap.set(item.id || item.name, item);
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'item-button';
-                button.dataset.id = item.id || item.name;
-                button.dataset.type = item.type;
-                let optionsHTML = '';
-                if (item.type === 'speise') {
-                    optionsHTML = `<div class="item-options">${renderOptionButtons('Varianten', item.variants, 'variant')}${renderOptionButtons('Dips', item.dips, 'dip')}</div>`;
-                }
-                button.innerHTML = `<div class="item-details"><h4>${item.title || item.name}</h4><p>${item.description}</p><div class="price">${item.price}</div></div>${optionsHTML}`;
-                return button;
-            }
+  const apiBase = (window.location.origin || '') + '/api';
+  const params = new URLSearchParams(window.location.search);
+  let currentListId = params.get('id'); // if present, use it
+  const orderIdToEdit = params.get('edit'); // optional
 
-            function handleSelection(e) {
-                const target = e.target;
-                const itemButton = target.closest('.item-button');
-                if (!itemButton) return;
-                const id = itemButton.dataset.id;
-                const type = itemButton.dataset.type;
-                const isMainButtonClick = target.closest('.item-details');
-                if (isMainButtonClick) {
-                    const listContainer = type === 'speise' ? speisenList : getraenkeList;
-                    const currentlySelected = listContainer.querySelector('.item-button.selected');
-                    if (currentlySelected && currentlySelected !== itemButton) {
-                        currentlySelected.classList.remove('selected', 'expanded');
-                    }
-                    itemButton.classList.toggle('selected');
-                    itemButton.classList.toggle('expanded', itemButton.classList.contains('selected'));
-                    if (type === 'speise') {
-                        selection.storeItemId = itemButton.classList.contains('selected') ? id : null;
-                        selection.variants.clear();
-                        selection.dips.clear();
-                    } else {
-                        selection.drinkName = itemButton.classList.contains('selected') ? id : null;
-                    }
-                }
-                const optionButton = target.closest('.option-button');
-                if (optionButton) {
-                    const optionType = optionButton.dataset.type;
-                    const value = optionButton.dataset.value;
-                    if (optionType === 'variant' || optionType === 'dip') {
-                        optionButton.classList.toggle('selected');
-                        const set = optionType === 'variant' ? selection.variants : selection.dips;
-                        if (set.has(value)) set.delete(value); else set.add(value);
-                    }
-                }
-                updateTotalPrice();
-            }
+  // helpers
+  const formatPrice = (p) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(p);
+  function parsePrice(priceValue) {
+    if (typeof priceValue === 'string') {
+      const cleaned = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
+      return parseFloat(cleaned) || 0;
+    }
+    return typeof priceValue === 'number' ? priceValue : 0;
+  }
 
-            function setupScrollAnimations(container) {
-                const itemsToAnimate = container.querySelectorAll('.item-button');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach((entry, index) => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.transitionDelay = `${index * 50}ms`;
-                            entry.target.classList.add('is-visible');
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                itemsToAnimate.forEach(item => observer.observe(item));
-            }
-            
-            function loadOrderForEditing() {
-                formTitle.textContent = "Bestellung bearbeiten";
-                submitButton.textContent = "Änderungen speichern";
-                fetch(`http://localhost:8080/api/lists/${listId}/orders/${orderIdToEdit}`)
-                    .then(res => {
-                        if (!res.ok) throw new Error("Bestellung nicht gefunden");
-                        return res.json();
-                    })
-                    .then(order => {
-                        creatorNameInput.value = order.creator;
-                        const foodButton = speisenList.querySelector(`.item-button[data-id="${order.store_item.id}"]`);
-                        if (foodButton) {
-                            foodButton.querySelector('.item-details').click();
-                            setTimeout(() => {
-                                (order.store_item.variants || []).forEach(v => foodButton.querySelector(`[data-type="variant"][data-value="${v}"]`)?.click());
-                                (order.store_item.dips || []).forEach(d => foodButton.querySelector(`[data-type="dip"][data-value="${d}"]`)?.click());
-                            }, 100);
-                        }
-                        if(order.drink && order.drink.name) {
-                            getraenkeList.querySelector(`.item-button[data-id="${order.drink.name}"]`)?.querySelector('.item-details').click();
-                        }
-                    });
-            }
+  function updateTotalPrice() {
+    let total = 0;
+    selection.speisen.forEach(s => {
+      const item = itemDataMap.get(s.id);
+      if (item) total += parsePrice(item.price);
+    });
+    if (selection.drinks) {
+      const drink = itemDataMap.get(selection.drinks);
+      if (drink) total += parsePrice(drink.price);
+    }
+    totalPriceSpan.textContent = formatPrice(total);
+  }
 
-            orderForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const creator = creatorNameInput.value.trim();
-                if (!creator || !selection.storeItemId) {
-                    formError.style.display = 'block';
-                    return;
-                }
-                formError.style.display = 'none';
-                const orderPayload = {
-                    creator: creator,
-                    store_item: { id: selection.storeItemId, variants: Array.from(selection.variants), dips: Array.from(selection.dips) }
-                };
-                if (selection.drinkName) {
-                    orderPayload.drink = { name: selection.drinkName };
-                }
-                let url = `http://localhost:8080/api/lists/${listId}/orders`;
-                let method = 'POST';
-                if (orderIdToEdit) {
-                    url = `http://localhost:8080/api/lists/${listId}/orders/${orderIdToEdit}`;
-                    method = 'PUT';
-                    const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                    orderPayload.editKey = myOrderKeys[orderIdToEdit];
-                }
-                fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderPayload)
-                })
-                .then(response => { 
-                    if (!response.ok) {
-                        console.error("Antwort vom Server war nicht OK:", response);
-                        throw new Error('Aktion fehlgeschlagen'); 
-                    }
-                    return response.json(); 
-                })
-                .then(data => {
-                    if (method === 'POST') {
-                        let myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                        myOrderKeys[data.id] = data.editKey;
-                        localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
-                    }
-                    window.location.href = `checkout.html?id=${listId}`;
-                })
-                .catch(error => alert('Fehler: ' + error.message));
-            });
-            
-            // --- INITIALISIERUNG ---
-            loadAndCheckDeadline();
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
-                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
-                    renderItems();
-                    if (orderIdToEdit) {
-                        loadOrderForEditing();
-                    }
-                });
-            setupSortDropdowns();
-            speisenList.addEventListener('click', handleSelection);
-            getraenkeList.addEventListener('click', handleSelection);
-        });
-    </script>
+  // create item button
+  function createItemButton(item) {
+    const id = item.id || item.name;
+    itemDataMap.set(id, item);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'item-button';
+    btn.dataset.id = id;
+    btn.dataset.type = item.type;
+    btn.innerHTML = `<div class="item-details"><h4>${item.title || item.name}</h4><p>${item.description || ''}</p><div class="price">${item.price}</div></div>`;
+    return btn;
+  }
+
+  function renderItems() {
+    speisenList.innerHTML = '';
+    getraenkeList.innerHTML = '';
+    allSpeisen.forEach(it => {
+      const btn = createItemButton(it);
+      speisenList.appendChild(btn);
+      requestAnimationFrame(() => btn.classList.add('is-visible'));
+    });
+    allGetraenke.forEach(it => {
+      const btn = createItemButton(it);
+      getraenkeList.appendChild(btn);
+      requestAnimationFrame(() => btn.classList.add('is-visible'));
+    });
+    // restore selection UI if needed
+    selection.speisen.forEach(s => {
+      speisenList.querySelector(`[data-id="${s.id}"]`)?.classList.add('selected');
+    });
+    if (selection.drinks) getraenkeList.querySelector(`[data-id="${selection.drinks}"]`)?.classList.add('selected');
+  }
+
+  // click handling
+  function handleSelection(e) {
+    const btn = e.target.closest('.item-button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const type = btn.dataset.type;
+    if (type === 'speise') {
+      if (btn.classList.contains('selected')) {
+        btn.classList.remove('selected');
+        selection.speisen = selection.speisen.filter(x => x.id !== id);
+      } else {
+        btn.classList.add('selected');
+        selection.speisen.push({ id });
+      }
+    } else {
+      // drink -> only one
+      getraenkeList.querySelectorAll('.item-button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selection.drinks = id;
+    }
+    updateTotalPrice();
+  }
+
+  // localStorage helpers for lastOrder
+  function saveLastOrder(payload) {
+    localStorage.setItem('lastOrder', JSON.stringify(payload));
+    renderLastOrderSidebar();
+  }
+  function getLastOrder() {
+    try { return JSON.parse(localStorage.getItem('lastOrder')); } catch(e) { return null; }
+  }
+  function clearLastOrder() { localStorage.removeItem('lastOrder'); renderLastOrderSidebar(); }
+
+  // Render sidebar preview
+  function renderLastOrderSidebar() {
+    const last = getLastOrder();
+    if (!last) {
+      lastOrderSidebar.setAttribute('aria-hidden','true');
+      lastOrderSidebar.style.display = 'none';
+      lastOrderTab.style.display = 'none';
+      lastOrderContent.textContent = 'Keine Bestellung vorhanden.';
+      return;
+    }
+    lastOrderSidebar.style.display = 'flex';
+    lastOrderSidebar.setAttribute('aria-hidden','false');
+    // show tab on small screens
+    if (window.innerWidth <= 900) lastOrderTab.style.display = 'flex';
+
+    // build friendly preview instead of raw JSON
+    const parts = [];
+    parts.push(`Besteller: ${last.creator || '-'}`);
+    parts.push('');
+    parts.push('Speisen:');
+    if (Array.isArray(last.speisen) && last.speisen.length) {
+      last.speisen.forEach((s, idx) => {
+        const item = itemDataMap.get(s.id) || { title: s.id };
+        parts.push(` ${idx+1}. ${item.title || item.name || s.id}`);
+      });
+    } else {
+      parts.push(' - (keine)');
+    }
+    parts.push('');
+    if (last.drink && last.drink.name) {
+      const d = itemDataMap.get(last.drink.name);
+      parts.push('Getränk: ' + (d?.title || d?.name || last.drink.name));
+    } else {
+      parts.push('Getränk: -');
+    }
+    // pretty price
+    let sum = 0;
+    (last.speisen || []).forEach(s => sum += parsePrice(itemDataMap.get(s.id)?.price || 0));
+    if (last.drink?.name) sum += parsePrice(itemDataMap.get(last.drink.name)?.price || 0);
+    parts.push('');
+    parts.push('Gesamt: ' + formatPrice(sum));
+
+    lastOrderContent.textContent = parts.join('\n');
+  }
+
+  // send flow:
+  // 1) ensure listId exists (create if missing)
+  // 2) POST /lists/{listId}/orders with order payload
+  async function ensureList() {
+    if (currentListId) return currentListId;
+    // create a list with no deadline
+    const url = apiBase + '/lists';
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({}) });
+    if (!res.ok) throw new Error('Liste erstellen fehlgeschlagen');
+    const json = await res.json();
+    // controller likely returns the created list object with ID; attempt to extract .id or .Id or similar
+    currentListId = json.id || json.ID || json.Id || json.listId || jsonListIdFrom(json) || null;
+    // fallback try to read any numeric/string first prop
+    if (!currentListId) {
+      // try to find an id-like property
+      for (const k of Object.keys(json)) {
+        if (/id/i.test(k)) { currentListId = json[k]; break; }
+      }
+    }
+    if (!currentListId) throw new Error('Konnte List-ID nach Erstellen nicht ermitteln');
+    // update URL without reload
+    const u = new URL(window.location);
+    u.searchParams.set('id', currentListId);
+    window.history.replaceState({}, '', u.toString());
+    return currentListId;
+
+    function jsonListIdFrom(obj) {
+      if (!obj || typeof obj !== 'object') return null;
+      if (obj?.Id) return obj.Id;
+      if (obj?.id) return obj.id;
+      if (obj?.listId) return obj.listId;
+      return null;
+    }
+  }
+
+  async function sendOrderToAPI(payload) {
+    // create list if needed
+    try {
+      const listId = await ensureList();
+      const url = apiBase + '/lists/' + encodeURIComponent(listId) + '/orders';
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>null);
+        throw new Error('Serverfehler: ' + (txt || res.status));
+      }
+      const json = await res.json();
+      // store editKey for convenience
+      const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys') || '{}');
+      if (json.id && json.editKey) {
+        myOrderKeys[json.id] = json.editKey;
+        localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
+      }
+      return json;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // Form submit: validate, save lastOrder locally and call API
+  orderForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const creator = creatorNameInput.value.trim();
+    if (!creator || selection.speisen.length === 0) {
+      formError.style.display = 'block';
+      return;
+    }
+    formError.style.display = 'none';
+
+    const payload = {
+      creator,
+      store_item: undefined,
+      // adapt to model.Order shape used by your backend:
+      // Backend previously expected "store_item" with id & variants/dips. To support multiple items,
+      // we will use "store_items" if backend supports it, else fallback to the first one.
+    };
+
+    // Try to send as "store_items" array if the API expects multiple items:
+    // We'll include both shapes for compatibility: send "store_items" and fallback "store_item"
+    payload.store_items = selection.speisen.map(s => ({ id: s.id }));
+    if (payload.store_items.length) payload.store_item = payload.store_items[0];
+    if (selection.drinks) payload.drink = { name: selection.drinks };
+
+    // Save as lastOrder in browser
+    saveLastOrder({ creator, speisen: selection.speisen, drink: selection.drinks ? { name: selection.drinks } : null });
+
+    // Send to API
+    try {
+      const spinnerText = document.getElementById('submit-button');
+      spinnerText.disabled = true;
+      spinnerText.textContent = 'Sende…';
+      const res = await sendOrderToAPI(payload);
+      spinnerText.disabled = false;
+      spinnerText.textContent = 'Bestellung abschicken';
+      // on success, redirect to checkout or show success
+      // if server returns id -> redirect to checkout
+      if (res && res.id) {
+        // redirect to checkout page if present; fallback to reload
+        window.location.href = 'checkout.html?id=' + encodeURIComponent(currentListId);
+      } else {
+        alert('Bestellung gesendet.');
+      }
+    } catch (err) {
+      alert('Fehler beim Senden: ' + (err.message || err));
+      document.getElementById('submit-button').disabled = false;
+      document.getElementById('submit-button').textContent = 'Bestellung abschicken';
+    }
+  });
+
+  // sidebar actions
+  restoreLastBtn.addEventListener('click', () => {
+    const last = getLastOrder();
+    if (!last) return;
+    creatorNameInput.value = last.creator || '';
+    selection.speisen = (last.speisen || []).map(s => ({ id: s.id }));
+    selection.drinks = last.drink?.name || null;
+    renderItems();
+    // visually mark selections
+    selection.speisen.forEach(s => speisenList.querySelector(`[data-id="${s.id}"]`)?.classList.add('selected'));
+    if (selection.drinks) getraenkeList.querySelector(`[data-id="${selection.drinks}"]`)?.classList.add('selected');
+    updateTotalPrice();
+  });
+
+  editLastBtn.addEventListener('click', () => {
+    // Enter 'edit' mode: restore and focus name
+    restoreLastBtn.click();
+    creatorNameInput.focus();
+  });
+
+  sendLastBtn.addEventListener('click', async () => {
+    const last = getLastOrder();
+    if (!last) { alert('Keine letzte Bestellung vorhanden.'); return; }
+    // prepare payload same as form
+    const payload = { creator: last.creator || 'Anonym', store_items: (last.speisen || []).map(s => ({ id: s.id })) };
+    if (last.drink?.name) payload.drink = { name: last.drink.name };
+    try {
+      sendLastBtn.disabled = true;
+      sendLastBtn.textContent = 'Sende…';
+      const res = await sendOrderToAPI(payload);
+      sendLastBtn.disabled = false;
+      sendLastBtn.textContent = 'Direkt senden';
+      if (res && res.id) {
+        alert('Bestellung erfolgreich gesendet.');
+        window.location.href = 'checkout.html?id=' + encodeURIComponent(currentListId);
+      } else {
+        alert('Bestellung gesendet.');
+      }
+    } catch (err) {
+      alert('Fehler beim Senden: ' + (err.message || err));
+      sendLastBtn.disabled = false;
+      sendLastBtn.textContent = 'Direkt senden';
+    }
+  });
+
+  // small UI: open / close sidebar
+  lastOrderTab.addEventListener('click', () => {
+    lastOrderSidebar.style.display = 'flex';
+    lastOrderSidebar.setAttribute('aria-hidden','false');
+    lastOrderTab.style.display = 'none';
+  });
+  closeSidebarBtn.addEventListener('click', () => {
+    lastOrderSidebar.style.display = 'none';
+    lastOrderSidebar.setAttribute('aria-hidden','true');
+    if (window.innerWidth <= 900) lastOrderTab.style.display = 'flex';
+  });
+
+  // REST: initial data load
+  async function loadItemsFromApi() {
+    try {
+      const res = await fetch(apiBase + '/items');
+      if (!res.ok) throw new Error('Items laden fehlgeschlagen');
+      const data = await res.json();
+      // your earlier data shape: categories[].items, drinks[]
+      data.categories?.forEach(cat => cat.items?.forEach(it => { it.type = 'speise'; allSpeisen.push(it); }));
+      data.drinks?.forEach(d => { d.type = 'getraenk'; allGetraenke.push(d); });
+      renderItems();
+      renderLastOrderSidebar();
+    } catch (err) {
+      // show friendly fallback (you may want to populate with static items)
+      console.error('Fehler beim Laden der Items:', err);
+      // graceful fallback: renderItems anyway with empty arrays
+      renderItems();
+      renderLastOrderSidebar();
+    }
+  }
+
+  // attach selection listeners after items exist
+  speisenList.addEventListener('click', handleSelection);
+  getraenkeList.addEventListener('click', handleSelection);
+
+  // init
+  loadItemsFromApi();
+
+  // expose function to clear last order from console for debugging (does not call forbidden endpoints)
+  window.__app = { clearLastOrder: () => { clearLastOrder(); console.log('Last order cleared'); } };
+
+  // ensure we never call /dev/clearall
+  // (explicit safety note: intentionally no calls to /dev/clearall are made)
+});
+</script>
 </body>
 </html>

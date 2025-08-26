@@ -5,321 +5,242 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bestellübersicht</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body.liste-body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
+        .container { max-width: 1000px; margin: auto; padding: 20px; }
+        .summary-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .summary-container { flex: 1; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .summary-card, .order-card { background: #fafafa; margin: 10px 0; padding: 10px; border-radius: 5px; transition: all 0.3s ease; opacity: 0; transform: translateY(10px); }
+        .summary-card.is-visible, .order-card.is-visible { opacity: 1; transform: translateY(0); }
+        .summary-card.is-checked-off { text-decoration: line-through; opacity: 0.5; }
+        .order-header, .summary-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 5px; }
+        .order-extras-list { margin:5px 0 0 15px; padding:0; list-style-type: disc; }
+        .countdown-timer { font-size: 1.2em; margin-top: 10px; }
+        button { cursor:pointer; padding:5px 10px; border:none; border-radius:4px; background:#007bff; color:#fff; }
+        button:hover { background:#0056b3; }
+        details { margin-top:20px; }
+        .order-actions { margin-top:10px; display:flex; gap:5px; }
+        .order-item { margin-top:5px; }
+    </style>
 </head>
-<body class="listen-body">
-    <div class="container">
-        <div class="list-header">
-            <h2>Bestellübersicht</h2>
-            <div id="listInfo"><p>Lade Listen-Details...</p></div>
-            <div id="countdownTimer" class="countdown-timer" style="display: none;"></div>
-        </div>
-        
-        <div class="page-content">
-            <div class="summary-grid">
-                <div class="summary-container">
-                    <div class="category-header">
-                        <h3>Speisen-Zusammenfassung</h3>
-                    </div>
-                    <div id="summaryList"></div>
-                </div>
-                <div class="summary-container">
-                    <div class="category-header">
-                        <h3>Getränke-Zusammenfassung</h3>
-                        <button type="button" class="btn-copy" id="copyDrinksBtn">Liste kopieren</button>
-                    </div>
-                    <div id="drinkSummaryList"></div>
-                </div>
-            </div>
-
-            <details class="details-accordion" id="detailsAccordion" style="display: none;">
-                <summary>Alle einzelnen Bestellungen anzeigen</summary>
-                <div class="orders-container" id="ordersContainer"></div>
-            </details>
-        </div>
+<body class="liste-body">
+<div class="container">
+    <div class="list-header">
+        <h2>Bestellübersicht</h2>
+        <div id="listInfo"><p>Lade Listen-Details...</p></div>
+        <div id="countdownTimer" class="countdown-timer" style="display: none;"></div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const listInfoDiv = document.getElementById('listInfo');
-            const ordersContainer = document.getElementById('ordersContainer');
-            const summaryListDiv = document.getElementById('summaryList');
-            const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
-            const copyDrinksBtn = document.getElementById('copyDrinksBtn');
-            const detailsAccordion = document.getElementById('detailsAccordion');
-            const countdownTimer = document.getElementById('countdownTimer');
-            const params = new URLSearchParams(window.location.search);
-            const listId = params.get('id');
-            
-            let isInitialLoad = true;
-            let drinkSummary = new Map();
-            let countdownInterval;
 
-            function saveCheckedState() {
-                const storageKey = `checkedItems_${listId}`;
-                const checkedCards = document.querySelectorAll('#summaryList .summary-card.is-checked-off');
-                const checkedKeys = Array.from(checkedCards).map(card => card.dataset.key);
-                localStorage.setItem(storageKey, JSON.stringify(checkedKeys));
-            }
+    <div class="page-content">
+        <div class="summary-grid">
+            <div class="summary-container">
+                <div class="category-header"><h3>Speisen-Zusammenfassung</h3></div>
+                <div id="summaryList"></div>
+            </div>
+            <div class="summary-container">
+                <div class="category-header">
+                    <h3>Getränke-Zusammenfassung</h3>
+                    <button type="button" class="btn-copy" id="copyDrinksBtn">Liste kopieren</button>
+                </div>
+                <div id="drinkSummaryList"></div>
+            </div>
+        </div>
 
-            function applyCheckedState() {
-                const storageKey = `checkedItems_${listId}`;
-                const savedKeys = localStorage.getItem(storageKey);
-                if (savedKeys) {
-                    const checkedKeys = new Set(JSON.parse(savedKeys));
-                    document.querySelectorAll('#summaryList .summary-card[data-key]').forEach(card => {
-                        if (checkedKeys.has(card.dataset.key)) {
-                            card.classList.add('is-checked-off');
-                        }
-                    });
-                }
-            }
+        <details class="details-accordion" id="detailsAccordion" style="display: none;">
+            <summary>Alle einzelnen Bestellungen anzeigen</summary>
+            <div class="orders-container" id="ordersContainer"></div>
+        </details>
+    </div>
+</div>
 
-            summaryListDiv.addEventListener('click', (e) => {
-                const card = e.target.closest('.summary-card');
-                if (card && card.dataset.key) {
-                    card.classList.toggle('is-checked-off');
-                    saveCheckedState();
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const listInfoDiv = document.getElementById('listInfo');
+    const ordersContainer = document.getElementById('ordersContainer');
+    const summaryListDiv = document.getElementById('summaryList');
+    const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
+    const copyDrinksBtn = document.getElementById('copyDrinksBtn');
+    const detailsAccordion = document.getElementById('detailsAccordion');
+    const countdownTimer = document.getElementById('countdownTimer');
+    const params = new URLSearchParams(window.location.search);
+    const listId = params.get('id');
+
+    let isInitialLoad = true;
+    let drinkSummary = new Map();
+    let countdownInterval;
+
+    function saveCheckedState() {
+        const storageKey = `checkedItems_${listId}`;
+        const checkedCards = document.querySelectorAll('#summaryList .summary-card.is-checked-off');
+        const checkedKeys = Array.from(checkedCards).map(card => card.dataset.key);
+        localStorage.setItem(storageKey, JSON.stringify(checkedKeys));
+    }
+
+    function applyCheckedState() {
+        const storageKey = `checkedItems_${listId}`;
+        const savedKeys = localStorage.getItem(storageKey);
+        if (savedKeys) {
+            const checkedKeys = new Set(JSON.parse(savedKeys));
+            document.querySelectorAll('#summaryList .summary-card[data-key]').forEach(card => {
+                if (checkedKeys.has(card.dataset.key)) card.classList.add('is-checked-off');
+            });
+        }
+    }
+
+    summaryListDiv.addEventListener('click', (e) => {
+        const card = e.target.closest('.summary-card');
+        if (card && card.dataset.key) {
+            card.classList.toggle('is-checked-off');
+            saveCheckedState();
+        }
+    });
+
+    copyDrinksBtn.addEventListener('click', () => {
+        if (drinkSummary.size > 0) {
+            const drinkLines = [];
+            drinkSummary.forEach((count, name) => drinkLines.push(`- ${count}x ${name}`));
+            navigator.clipboard.writeText(drinkLines.join('\n')).then(() => {
+                copyDrinksBtn.textContent = 'Kopiert!';
+                setTimeout(() => copyDrinksBtn.textContent = 'Liste kopieren', 2000);
+            });
+        }
+    });
+
+    function setupScrollAnimations(container) {
+        const itemsToAnimate = container.querySelectorAll('.summary-card:not(.is-visible), .order-card:not(.is-visible)');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    entry.target.style.transitionDelay = `${index * 50}ms`;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
                 }
             });
+        }, { threshold: 0.1 });
+        itemsToAnimate.forEach(item => observer.observe(item));
+    }
 
-            copyDrinksBtn.addEventListener('click', () => {
-                if (drinkSummary.size > 0) {
-                    const drinkLines = [];
-                    drinkSummary.forEach((count, name) => {
-                        drinkLines.push(`- ${count}x ${name}`);
-                    });
-                    const clipboardText = drinkLines.join('\n');
-                    navigator.clipboard.writeText(clipboardText).then(() => {
-                        copyDrinksBtn.textContent = 'Kopiert!';
-                        setTimeout(() => { copyDrinksBtn.textContent = 'Liste kopieren'; }, 2000);
-                    });
-                }
-            });
-
-            function setupScrollAnimations(container) {
-                const itemsToAnimate = container.querySelectorAll('.summary-card:not(.is-visible), .order-card:not(.is-visible)');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach((entry, index) => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.transitionDelay = `${index * 50}ms`;
-                            entry.target.classList.add('is-visible');
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                itemsToAnimate.forEach(item => observer.observe(item));
+    function startCountdown(deadlineString) {
+        if (!deadlineString) return;
+        const deadline = new Date(deadlineString).getTime();
+        countdownTimer.style.display = 'block';
+        if (countdownInterval) clearInterval(countdownInterval);
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const distance = deadline - now;
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                countdownTimer.innerHTML = '<span>Bestellfrist ist abgelaufen</span>';
+                return;
             }
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            countdownTimer.innerHTML = `<span>Verbleibende Zeit:</span><strong>${days}d ${hours}h ${minutes}m ${seconds}s</strong>`;
+        };
+        updateTimer();
+        countdownInterval = setInterval(updateTimer, 1000);
+    }
 
-            function handleDelete(orderId) {
-                const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                const editKey = myOrderKeys[orderId];
-                if (!editKey) {
-                    alert("Fehler: Kein Schlüssel für diese Bestellung gefunden.");
-                    return;
-                }
-                if (confirm("Möchtest du diese Bestellung wirklich löschen?")) {
-                    fetch(`http://localhost:8080/api/lists/${listId}/orders/${orderId}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ editKey: editKey })
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error("Löschen fehlgeschlagen.");
-                        delete myOrderKeys[orderId];
-                        localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
-                        loadAndRenderList();
-                    })
-                    .catch(err => alert(err.message));
-                }
-            }
+    function loadAndRenderList() {
+        const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
+        const listUrl = `http://localhost:8080/api/lists/${listId}`;
+        const itemsUrl = `http://localhost:8080/api/items`;
 
-            ordersContainer.addEventListener('click', e => {
-                if (e.target.classList.contains('delete-btn')) {
-                    const orderId = e.target.dataset.orderId;
-                    handleDelete(orderId);
-                }
-                if (e.target.classList.contains('btn-edit')) {
-                    const orderId = e.target.dataset.orderId;
-                    window.location.href = `liste.html?id=${listId}&edit=${orderId}`;
-                }
-            });
-
-            function startCountdown(deadlineString) {
-                if (!deadlineString) return;
-                const deadline = new Date(deadlineString).getTime();
-                countdownTimer.style.display = 'block';
-                if (countdownInterval) clearInterval(countdownInterval);
-
-                countdownInterval = setInterval(() => {
-                    const now = new Date().getTime();
-                    const distance = deadline - now;
-                    if (distance < 0) {
-                        clearInterval(countdownInterval);
-                        countdownTimer.innerHTML = '<span>Bestellfrist ist abgelaufen</span>';
-                        return;
-                    }
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                    countdownTimer.innerHTML = `<span>Verbleibende Zeit:</span><strong>${days}d ${hours}h ${minutes}m ${seconds}s</strong>`;
-                }, 1000);
-            }
-
-            function loadAndRenderList() {
-                if (!listId) {
-                    ordersContainer.innerHTML = "<p style='color:red;'>Fehler: Keine Listen-ID in der URL gefunden.</p>";
-                    return;
-                }
-                const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                const listUrl = `http://localhost:8080/api/lists/${listId}`;
-                const itemsUrl = `http://localhost:8080/api/items`;
-
-                Promise.all([
-                    fetch(listUrl).then(res => res.json()),
-                    fetch(itemsUrl).then(res => res.json())
-                ])
-                .then(([listData, itemsData]) => {
-                    const allItemsMap = new Map();
-                    if (itemsData?.categories) {
-                        itemsData.categories.forEach(cat => {
-                            cat.items?.forEach(item => allItemsMap.set(item.id, { ...item, category: cat.name }));
-                        });
-                    }
-                    if (itemsData?.drinks) {
-                        itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
-                    }
-
-                    const createdDate = new Date(listData.created);
-                    const totalOrders = listData.orders ? listData.orders.length : 0;
-                    listInfoDiv.innerHTML = `<p style="margin:0; color: var(--text-light);">
-                        <strong>ID:</strong> ${listData.id} | <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')} | <strong>Bestellungen gesamt:</strong> ${totalOrders}
-                    </p>`;
-                    
-                    // Countdown starten, sobald wir die Deadline haben
-                    startCountdown(listData.deadline);
-
-                    summaryListDiv.innerHTML = '';
-                    drinkSummaryListDiv.innerHTML = '';
-                    ordersContainer.innerHTML = '';
-                    
-                    if (Array.isArray(listData.orders) && listData.orders.length > 0) {
-                        detailsAccordion.style.display = 'block';
-                        
-                        const foodSummary = new Map();
-                        drinkSummary.clear();
-                        listData.orders.forEach(order => {
-                            const variants = (order.store_item.variants || []).sort().join(',');
-                            const dips = (order.store_item.dips || []).sort().join(',');
-                            const foodKey = `${order.store_item.id}|${variants}|${dips}`;
-                            if (foodSummary.has(foodKey)) {
-                                foodSummary.get(foodKey).count++;
-                                foodSummary.get(foodKey).creators.push(order.creator);
-                            } else {
-                                foodSummary.set(foodKey, { count: 1, creators: [order.creator], orderDetails: order });
-                            }
-                            if (order.drink && order.drink.name) {
-                                const drinkName = order.drink.name;
-                                drinkSummary.set(drinkName, (drinkSummary.get(drinkName) || 0) + 1);
-                            }
-                        });
-
-                        const sortedFoodSummary = Array.from(foodSummary.entries()).sort((a, b) => {
-                            const itemA = allItemsMap.get(a[1].orderDetails.store_item.id);
-                            const itemB = allItemsMap.get(b[1].orderDetails.store_item.id);
-                            if (!itemA || !itemB) return 0;
-                            return itemA.category.localeCompare(itemB.category);
-                        });
-
-                        let lastCategory = "";
-                        sortedFoodSummary.forEach(([key, summary]) => {
-                            const order = summary.orderDetails;
-                            const itemDetails = allItemsMap.get(order.store_item.id);
-                            const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
-                            if (itemDetails && itemDetails.category !== lastCategory) {
-                                const categoryHeader = document.createElement('h3');
-                                categoryHeader.className = 'summary-category-subheader';
-                                categoryHeader.textContent = itemDetails.category;
-                                summaryListDiv.appendChild(categoryHeader);
-                                lastCategory = itemDetails.category;
-                            }
-                            let extrasHtml = '';
-                            const variants = order.store_item.variants || [];
-                            const dips = order.store_item.dips || [];
-                            if (variants.length > 0 || dips.length > 0) {
-                                extrasHtml = '<ul class="order-extras-list">';
-                                variants.forEach(v => extrasHtml += `<li>${v}</li>`);
-                                dips.forEach(d => extrasHtml += `<li>${d}</li>`);
-                                extrasHtml += '</ul>';
-                            }
-                            const summaryCard = document.createElement('div');
-                            summaryCard.className = 'summary-card';
-                            summaryCard.dataset.key = key;
-                            if (!isInitialLoad) summaryCard.classList.add('is-visible');
-                            summaryCard.innerHTML = `<div class="summary-header"><div class="summary-count">${summary.count}x</div><strong>${itemName}</strong></div><div class="order-body">${extrasHtml ? `<div class="order-item">${extrasHtml}</div>` : ''}<div class="order-item"><span class="type">Bestellt von:</span> <span class="name">${summary.creators.join(', ')}</span></div></div>`;
-                            summaryListDiv.appendChild(summaryCard);
-                        });
-
-                        if (drinkSummary.size > 0) {
-                            drinkSummary.forEach((count, name) => {
-                                const drinkCard = document.createElement('div');
-                                drinkCard.className = 'summary-card';
-                                drinkCard.style.cursor = 'default';
-                                if (!isInitialLoad) drinkCard.classList.add('is-visible');
-                                drinkCard.innerHTML = `<div class="summary-header"><div class="summary-count">${count}x</div><strong>${name}</strong></div>`;
-                                drinkSummaryListDiv.appendChild(drinkCard);
-                            });
-                        } else {
-                            drinkSummaryListDiv.innerHTML = "<p>Keine Getränke bestellt.</p>";
-                        }
-
-                        listData.orders.forEach(order => {
-                            const orderCard = document.createElement('div');
-                            orderCard.className = 'order-card';
-                            if (!isInitialLoad) orderCard.classList.add('is-visible');
-                            const orderDate = new Date(order.created);
-                            const itemDetails = allItemsMap.get(order.store_item.id);
-                            const itemName = itemDetails ? itemDetails.title : `ID: ${order.store_item.id}`;
-                            let drinkHtml = '<span class="name">-</span>';
-                            if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
-                            let extrasHtml = '';
-                            const variants = order.store_item.variants || [];
-                            const dips = order.store_item.dips || [];
-                            if (variants.length > 0 || dips.length > 0) {
-                                extrasHtml = '<ul class="order-extras-list">';
-                                variants.forEach(v => extrasHtml += `<li>${v}</li>`);
-                                dips.forEach(d => extrasHtml += `<li>${d}</li>`);
-                                extrasHtml += '</ul>';
-                            }
-                            let buttonsHtml = '';
-                            if (myOrderKeys[order.id]) {
-                                buttonsHtml = `<div class="order-actions"><button class="btn-edit" data-order-id="${order.id}">Bearbeiten</button><button class="delete-btn" data-order-id="${order.id}">Löschen</button></div>`;
-                            }
-                            orderCard.innerHTML = `<div class="order-header"><strong>${order.creator}</strong><span class="timestamp">${orderDate.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span></div><div class="order-body"><div class="order-item"><span class="type">Speise:</span> <span class="name">${itemName}</span>${extrasHtml}</div><div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div></div>${buttonsHtml}`;
-                            ordersContainer.appendChild(orderCard);
-                        });
-                        
-                        applyCheckedState();
-                        if (isInitialLoad) {
-                            setupScrollAnimations(summaryListDiv);
-                            setupScrollAnimations(drinkSummaryListDiv);
-                            setupScrollAnimations(ordersContainer);
-                        }
-
-                    } else {
-                        summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
-                        detailsAccordion.style.display = 'none';
-                    }
-                    isInitialLoad = false;
-                })
-                .catch(err => { 
-                    console.error("Fehler:", err);
-                    ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste. Läuft der Server und ist unter http://localhost:8080 erreichbar?</p>";
+        Promise.all([fetch(listUrl).then(res => res.json()), fetch(itemsUrl).then(res => res.json())])
+        .then(([listData, itemsData]) => {
+            const allItemsMap = new Map();
+            if (itemsData?.categories) {
+                itemsData.categories.forEach(cat => {
+                    cat.items?.forEach(item => {
+                        allItemsMap.set(item.id, { ...item, category: cat.name });
+                    });
                 });
             }
-            
-            loadAndRenderList();
-            setInterval(loadAndRenderList, 5000);
+
+            const createdDate = new Date(listData.created);
+            const totalOrders = listData.orders ? listData.orders.length : 0;
+            listInfoDiv.innerHTML = `<p style="margin:0; color: var(--text-light);">
+                <strong>ID:</strong> ${listData.id} | <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')} | <strong>Bestellungen gesamt:</strong> ${totalOrders}
+            </p>`;
+            startCountdown(listData.deadline);
+
+            summaryListDiv.innerHTML = '';
+            drinkSummaryListDiv.innerHTML = '';
+            ordersContainer.innerHTML = '';
+
+            if (Array.isArray(listData.orders) && listData.orders.length > 0) {
+                detailsAccordion.style.display = 'block';
+                const foodSummary = new Map();
+                drinkSummary.clear();
+
+                listData.orders.forEach(order => {
+                    const storeItem = order.store_item;
+                    const drinkItem = order.drink;
+                    const extrasArray = [];
+                    if (storeItem?.variants) extrasArray.push(...storeItem.variants);
+                    if (storeItem?.dips) extrasArray.push(...storeItem.dips);
+                    const extrasHtml = extrasArray.map(extra => `<li>${extra}</li>`).join('');
+
+                    // Name aus ItemsData holen
+                    const itemName = allItemsMap.get(storeItem?.id)?.name || storeItem?.id || 'Unbekannt';
+
+                    // Zusammenfassung Speisen
+                    foodSummary.set(itemName, (foodSummary.get(itemName) || 0) + 1);
+
+                    // Zusammenfassung Getränke
+                    if (drinkItem?.name) {
+                        const drinkName = `${drinkItem.name} ${drinkItem.size || ''}`.trim();
+                        drinkSummary.set(drinkName, (drinkSummary.get(drinkName) || 0) + 1);
+                    }
+
+                    // Einzelbestellungen
+                    const orderCard = document.createElement('div');
+                    orderCard.classList.add('order-card');
+                    orderCard.innerHTML = `
+                        <div class="order-header"><strong>${order.creator || 'Unbekannt'}</strong> (${order.id})</div>
+                        <div class="order-details">
+                            <p>Speise: ${itemName}</p>
+                            ${extrasHtml ? `<ul class="order-extras-list">${extrasHtml}</ul>` : ''}
+                            ${drinkItem?.name ? `<p>Getränk: ${drinkItem.name} ${drinkItem.size || ''}</p>` : ''}
+                        </div>`;
+                    ordersContainer.appendChild(orderCard);
+                });
+
+                // Speisen-Zusammenfassung rendern
+                foodSummary.forEach((count, name) => {
+                    const foodCard = document.createElement('div');
+                    foodCard.classList.add('summary-card');
+                    foodCard.dataset.key = name;
+                    foodCard.innerHTML = `<div class="order-header">${name} (${count})</div>`;
+                    summaryListDiv.appendChild(foodCard);
+                });
+
+                // Getränke-Zusammenfassung rendern
+                drinkSummary.forEach((count, name) => {
+                    const drinkCard = document.createElement('div');
+                    drinkCard.classList.add('summary-card');
+                    drinkCard.dataset.key = name;
+                    drinkCard.innerHTML = `<div class="order-header">${name} (${count})</div>`;
+                    drinkSummaryListDiv.appendChild(drinkCard);
+                });
+
+                applyCheckedState();
+                setupScrollAnimations(summaryListDiv);
+                setupScrollAnimations(ordersContainer);
+            } else {
+                detailsAccordion.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            listInfoDiv.innerHTML = `<p style="color:red;">Fehler beim Laden der Liste</p>`;
+            console.error(err);
         });
-    </script>
+    }
+
+    loadAndRenderList();
+});
+</script>
 </body>
 </html>

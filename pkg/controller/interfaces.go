@@ -6,12 +6,12 @@ import (
 
 type Database interface {
 	CreateOrderList(list *model.OrderList) error
-	GetOrderList(id string) (*model.OrderList, error)
-	DeleteOrderList(id string) error
 	CreateOrder(orderListId string, order *model.Order) error
+	GetOrderList(orderListId string) (*model.OrderList, error)
 	GetOrders(orderListId string) ([]*model.Order, error)
+	DeleteOrderList(orderListId string) error
 	GetOrder(orderListId, orderId string) (*model.Order, error)
 	UpdateOrder(orderListId string, order *model.Order) error
 	DeleteOrder(orderListId, orderId string) error
-	ClearAllData() error //Debug
+	ClearAllData() error //debug
 }

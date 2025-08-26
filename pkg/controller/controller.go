@@ -110,6 +110,10 @@ func (t *Controller) ClearAllData() error {
 	return t.db.ClearAllData()
 }
 
+func (c *Controller) GetOrderList(orderListId string) (*model.OrderList, error) {
+	return c.db.GetOrderList(orderListId)
+}
+
 var ErrDeadlineExceeded = errors.New("deadline for this order list has been exceeded")
 
 func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model.Order, error) {
@@ -124,37 +128,40 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 	order.Id = uuid.New().String()
 	order.Created = time.Now()
 	order.EditKey = uuid.New().String()
+
 	err = t.validator.Struct(order)
 	if err != nil {
 		return nil, err
 	}
 
-	item, ok, err := t.getStoreItem(order.StoreItem.Id)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", order.StoreItem.Id)
-	}
-
-	var invalidVariants ListError
-	for _, variant := range order.StoreItem.Variants {
-		if !item.VariantsContain(variant) {
-			invalidVariants = append(invalidVariants, variant)
+	for _, storeItem := range order.StoreItems {
+		item, ok, err := t.getStoreItem(storeItem.Id)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if len(invalidVariants) > 0 {
-		return nil, elk.Wrap(ErrInvalidVariants, invalidVariants, "invalid variants")
-	}
-
-	var invalidDips ListError
-	for _, dip := range order.StoreItem.Dips {
-		if !slices.Contains(item.Dips, dip) {
-			invalidDips = append(invalidDips, dip)
+		if !ok {
+			return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", storeItem.Id)
 		}
-	}
-	if len(invalidDips) > 0 {
-		return nil, elk.Wrap(ErrInvalidDips, invalidDips, "invalid dips")
+
+		var invalidVariants ListError
+		for _, variant := range storeItem.Variants {
+			if !item.VariantsContain(variant) {
+				invalidVariants = append(invalidVariants, variant)
+			}
+		}
+		if len(invalidVariants) > 0 {
+			return nil, elk.Wrap(ErrInvalidVariants, invalidVariants, "invalid variants")
+		}
+
+		var invalidDips ListError
+		for _, dip := range storeItem.Dips {
+			if !slices.Contains(item.Dips, dip) {
+				invalidDips = append(invalidDips, dip)
+			}
+		}
+		if len(invalidDips) > 0 {
+			return nil, elk.Wrap(ErrInvalidDips, invalidDips, "invalid dips")
+		}
 	}
 
 	err = t.db.CreateOrder(orderListId, order)
@@ -202,7 +209,7 @@ func (t *Controller) UpdateOrder(orderListId, orderId, editKey string, updatedOr
 	}
 
 	order.Creator = updatedOrder.Creator
-	order.StoreItem = updatedOrder.StoreItem
+	order.StoreItems = updatedOrder.StoreItems
 	order.Drink = updatedOrder.Drink
 
 	if err := t.db.UpdateOrder(orderListId, order); err != nil {

@@ -76,16 +76,7 @@ nav a:hover { color: var(--primary-color); }
 
 footer { text-align: center; padding: 40px 0; border-top: 1px solid var(--border-color); color: var(--text-light); font-size: 0.9em; }
 
-.deadline-display {
-    padding: 12px 15px;
-    background-color: #fffbeb;
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
-    text-align: center;
-    font-weight: 500;
-    margin-bottom: 20px;
-}
-
+/* --- Stile für Bestellseite (liste.html) --- */
 .full-height-body {
     height: 100vh;
     display: flex;
@@ -98,52 +89,6 @@ footer { text-align: center; padding: 40px 0; border-top: 1px solid var(--border
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-}
-
-.order-actions {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    gap: 10px;
-}
-.delete-btn {
-    background: #ef4444; color: white; border: none;
-    border-radius: 6px; padding: 6px 12px;
-    font-size: 0.9em; cursor: pointer;
-}
-.delete-btn:hover { background: #dc2626; }
-
-.btn-edit {
-    background-color: #3b82f6; /* Blau */
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 0.9em;
-    cursor: pointer;
-}
-.btn-edit:hover {
-    background-color: #2563eb;
-}
-
-.countdown-timer {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-    text-align: center;
-}
-
-.countdown-timer span {
-    font-size: 0.9em;
-    color: var(--text-light);
-    margin-right: 10px;
-}
-
-.countdown-timer strong {
-    font-size: 1.3em;
-    color: var(--primary-color);
-    font-weight: 700;
 }
 
 .menu-wrapper { display: grid; grid-template-columns: 1fr; gap: 30px; flex: 1 1 auto; min-height: 0; }

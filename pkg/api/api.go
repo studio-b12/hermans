@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,32 +13,41 @@ type API struct {
 }
 
 func New(ctl Controller, addr string) *API {
-	mux := http.NewServeMux()
+	// Erstelle einen Mux NUR für die API-Routen
+	apiMux := http.NewServeMux()
+	t := API{ctl: ctl}
 
-	server := &http.Server{
-		Addr:    addr,
-		Handler: mux,
-	}
+	// Registriere alle API-Routen beim apiMux
+	apiMux.HandleFunc("GET /items", t.handleGetStoreItems)
+	apiMux.HandleFunc("POST /lists", t.handleCreateOrderList)
+	apiMux.HandleFunc("GET /lists/{id}", t.handleGetOrderList)
+	apiMux.HandleFunc("DELETE /lists/{id}", t.handleDeleteOrderList)
+	apiMux.HandleFunc("POST /lists/{id}/orders", t.handleCreateOrder)
+	apiMux.HandleFunc("GET /lists/{listId}/orders/{orderId}", t.handleGetOrder)
+	apiMux.HandleFunc("PUT /lists/{listId}/orders/{orderId}", t.handleUpdateOrder)
+	apiMux.HandleFunc("DELETE /lists/{listId}/orders/{orderId}", t.handleDeleteOrder)
+	apiMux.HandleFunc("GET /dev/clearall", t.handleClearAll)
 
-	t := API{
-		ctl:    ctl,
-		server: server,
-	}
+	// Erstelle einen Haupt-Mux, der den Traffic aufteilt
+	mainMux := http.NewServeMux()
+	// Alles, was an /api/ geht, wird vom apiMux behandelt
+	mainMux.Handle("/api/", http.StripPrefix("/api", apiMux))
+	// Alles andere wird als statische Datei aus dem "webapp"-Ordner serviert
+	mainMux.Handle("/", http.FileServer(http.Dir("webapp")))
 
-	mux.Handle("/", http.FileServer(http.Dir("webapp")))
+	// Erstelle einen finalen Handler, der CORS für alle Anfragen setzt
+	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		mainMux.ServeHTTP(w, r)
+	})
 
-	mux.HandleFunc("OPTIONS /", t.handleOptions)
-	mux.HandleFunc("GET /api/items", multiHandler(t.setCORSHeader, t.handleGetStoreItems))
-	mux.HandleFunc("POST /api/lists", multiHandler(t.setCORSHeader, t.handleCreateOrderList))
-	mux.HandleFunc("GET /api/lists/{id}", multiHandler(t.setCORSHeader, t.handleGetOrderList))
-	mux.HandleFunc("DELETE /api/lists/{id}", multiHandler(t.setCORSHeader, t.handleDeleteOrderList))
-	mux.HandleFunc("POST /api/lists/{id}/orders", multiHandler(t.setCORSHeader, t.handleCreateOrder))
-	mux.HandleFunc("PUT /api/lists/{listId}/orders/{orderId}", multiHandler(t.setCORSHeader, t.handleUpdateOrder))
-	mux.HandleFunc("DELETE /api/lists/{listId}/orders/{orderId}", multiHandler(t.setCORSHeader, t.handleDeleteOrder))
-	mux.HandleFunc("GET /api/lists/{listId}/orders/{orderId}", multiHandler(t.setCORSHeader, t.handleGetOrder))
-	//-----------------------------------------------------------------------------\\
-	mux.HandleFunc("GET /api/dev/clearall", t.handleClearAll) //Debug
-
+	t.server = &http.Server{Addr: addr, Handler: finalHandler}
 	return &t
 }
 
@@ -47,12 +55,6 @@ func (t *API) Start() error {
 	return t.server.ListenAndServe()
 }
 
-func (t *API) handleOptions(w http.ResponseWriter, r *http.Request) {
-	t.setCORSHeader(w, r)
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// Debug
 func (t *API) handleClearAll(w http.ResponseWriter, r *http.Request) {
 	if err := t.ctl.ClearAllData(); err != nil {
 		respondErr(w, err)
@@ -68,7 +70,6 @@ func (t *API) handleGetStoreItems(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-
 	respondJson(w, http.StatusOK, data)
 }
 
@@ -76,79 +77,81 @@ func (t *API) handleCreateOrderList(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Deadline *time.Time `json:"deadline"`
 	}
-
-	payload, err := readJsonBody[struct {
+	// Dein readJsonBody aus util.go wird hier aufgerufen
+	_, _ = readJsonBody[struct {
 		Deadline *time.Time `json:"deadline"`
 	}](r)
-	if err != nil && err.Error() != "EOF" {
-		slog.Warn("could not read optional deadline body", "err", err)
-	}
 
 	list, err := t.ctl.CreateOrderList(payload.Deadline)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
 	respondJson(w, http.StatusCreated, list)
 }
 
 func (t *API) handleGetOrderList(w http.ResponseWriter, r *http.Request) {
 	orderListId := r.PathValue("id")
 
-	list, err := t.ctl.GetOrders(orderListId)
+	// Hole die OrderList selbst
+	list, err := t.ctl.GetOrderList(orderListId)
 	if err != nil {
-		// Prüfe, ob die Liste nicht gefunden wurde und gib 404 zurück
-		http.Error(w, "Liste nicht gefunden", http.StatusNotFound)
+		respondErr(w, err)
 		return
 	}
 
-	respondJson(w, http.StatusOK, list)
+	// Hole die Orders zur Liste
+	orders, err := t.ctl.GetOrders(orderListId)
+	if err != nil {
+		respondErr(w, err)
+		return
+	}
+
+	// Kombiniere die Daten
+	respondJson(w, http.StatusOK, map[string]interface{}{
+		"id":       list.Id,
+		"created":  list.Created,
+		"deadline": list.Deadline,
+		"orders":   orders,
+	})
 }
 
 func (t *API) handleGetOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
-
 	order, err := t.ctl.GetOrder(listId, orderId)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
-	// EditKey nicht mitsenden!
 	respondJson(w, http.StatusOK, order)
 }
 
 func (t *API) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	orderListId := r.PathValue("id")
-
 	order, err := readJsonBody[model.Order](r)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
 	newOrder, err := t.ctl.CreateOrder(orderListId, &order)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
 	respondJson(w, http.StatusCreated, map[string]interface{}{
-		"id":         newOrder.Id,
-		"created":    newOrder.Created,
-		"creator":    newOrder.Creator,
-		"store_item": newOrder.StoreItem,
-		"drink":      newOrder.Drink,
-		"editKey":    newOrder.EditKey,
+		"id":          newOrder.Id,
+		"created":     newOrder.Created,
+		"creator":     newOrder.Creator,
+		"store_items": newOrder.StoreItems,
+		"drink":       newOrder.Drink,
+		"editKey":     newOrder.EditKey,
 	})
 }
 
 func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
-
 	payload, err := readJsonBody[struct {
 		model.Order
 		EditKey string `json:"editKey"`
@@ -157,20 +160,17 @@ func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-
 	updatedOrder, err := t.ctl.UpdateOrder(listId, orderId, payload.EditKey, &payload.Order)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
 	respondJson(w, http.StatusOK, updatedOrder)
 }
 
 func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
-
 	payload, err := readJsonBody[struct {
 		EditKey string `json:"editKey"`
 	}](r)
@@ -178,7 +178,6 @@ func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-
 	if err := t.ctl.DeleteOrder(listId, orderId, payload.EditKey); err != nil {
 		respondErr(w, err)
 		return
@@ -188,18 +187,10 @@ func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 
 func (t *API) handleDeleteOrderList(w http.ResponseWriter, r *http.Request) {
 	orderListId := r.PathValue("id")
-
 	err := t.ctl.DeleteOrderList(orderListId)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (t *API) setCORSHeader(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 }

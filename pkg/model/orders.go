@@ -15,7 +15,7 @@ type OrderList struct {
 	Id       string     `json:"id"`
 	Created  time.Time  `json:"created"`
 	Orders   []*Order   `json:"orders"`
-	Deadline *time.Time `json:"deadline,omitempty"` // Deadline für die Bestellung
+	Deadline *time.Time `json:"deadline,omitempty"`
 }
 
 type StoreItem struct {
@@ -30,10 +30,10 @@ type Drink struct {
 }
 
 type Order struct {
-	Id        string     `json:"id"`
-	Created   time.Time  `json:"created"`
-	Creator   string     `json:"creator" validate:"required"`
-	StoreItem *StoreItem `json:"store_item" validate:"required"`
-	Drink     *Drink     `json:"drink"`
-	EditKey   string     `json:"-"`
+	Id         string       `json:"id"`
+	Created    time.Time    `json:"created"`
+	Creator    string       `json:"creator" validate:"required"`
+	StoreItems []*StoreItem `json:"store_items" validate:"required,min=1"`
+	Drink      *Drink       `json:"drink"`
+	EditKey    string       `json:"-"`
 }

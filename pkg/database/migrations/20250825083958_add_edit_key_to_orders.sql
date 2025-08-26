@@ -1,5 +1,5 @@
 -- +goose Up
-ALTER TABLE "Order" ADD COLUMN "EditKey" TEXT;
+ALTER TABLE "OrderList" ADD COLUMN "Deadline" DATETIME NULL;
 
 -- +goose Down
-ALTER TABLE "Order" DROP COLUMN "EditKey";
+ALTER TABLE "OrderList" DROP COLUMN "Deadline";

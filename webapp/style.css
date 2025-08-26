@@ -76,7 +76,16 @@ nav a:hover { color: var(--primary-color); }
 
 footer { text-align: center; padding: 40px 0; border-top: 1px solid var(--border-color); color: var(--text-light); font-size: 0.9em; }
 
-/* --- Stile für Bestellseite (liste.html) --- */
+.deadline-display {
+    padding: 12px 15px;
+    background-color: #fffbeb;
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
 .full-height-body {
     height: 100vh;
     display: flex;
@@ -116,6 +125,25 @@ footer { text-align: center; padding: 40px 0; border-top: 1px solid var(--border
 }
 .btn-edit:hover {
     background-color: #2563eb;
+}
+
+.countdown-timer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.countdown-timer span {
+    font-size: 0.9em;
+    color: var(--text-light);
+    margin-right: 10px;
+}
+
+.countdown-timer strong {
+    font-size: 1.3em;
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 .menu-wrapper { display: grid; grid-template-columns: 1fr; gap: 30px; flex: 1 1 auto; min-height: 0; }

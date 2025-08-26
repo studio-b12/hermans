@@ -12,9 +12,10 @@ const (
 )
 
 type OrderList struct {
-	Id      string    `json:"id"`
-	Created time.Time `json:"created"`
-	Orders  []*Order  `json:"orders"`
+	Id       string     `json:"id"`
+	Created  time.Time  `json:"created"`
+	Orders   []*Order   `json:"orders"`
+	Deadline *time.Time `json:"deadline,omitempty"` // Deadline für die Bestellung
 }
 
 type StoreItem struct {
@@ -34,6 +35,5 @@ type Order struct {
 	Creator   string     `json:"creator" validate:"required"`
 	StoreItem *StoreItem `json:"store_item" validate:"required"`
 	Drink     *Drink     `json:"drink"`
-	// Bearbeiten/ Löschen von Bestellungen
-	EditKey string `json:"-"`
+	EditKey   string     `json:"-"`
 }

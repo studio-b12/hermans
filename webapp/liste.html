@@ -8,6 +8,7 @@
 </head>
 <body class="liste-body">
     <div class="container">
+        <div class="deadline-display" id="deadlineDisplay" style="display: none;"></div>
         <form id="orderForm">
             <div class="menu-wrapper">
                 <div class="category-card">
@@ -69,8 +70,9 @@
             const formError = document.getElementById('formError');
             const formTitle = document.getElementById('form-title');
             const submitButton = document.getElementById('submit-button');
+            const deadlineDisplay = document.getElementById('deadlineDisplay');
 
-            const apiUrl = '/api/items';
+            const apiUrl = 'http://localhost:8080/api/items';
             const params = new URLSearchParams(window.location.search);
             const listId = params.get('id');
             const orderIdToEdit = params.get('edit');
@@ -84,6 +86,34 @@
             let selection = {
                 storeItemId: null, variants: new Set(), dips: new Set(), drinkName: null,
             };
+
+            function disableForm(message) {
+                orderForm.querySelectorAll('button, input').forEach(el => el.disabled = true);
+                document.querySelectorAll('.search-input, .sort-button').forEach(el => el.disabled = true);
+                submitButton.textContent = message;
+                formTitle.textContent = "Bestellungen geschlossen";
+            }
+
+            function loadAndCheckDeadline() {
+                if (!listId) return;
+                fetch(`http://localhost:8080/api/lists/${listId}`)
+                    .then(res => res.json())
+                    .then(listData => {
+                        if (listData.deadline) {
+                            const deadline = new Date(listData.deadline);
+                            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+                            deadlineDisplay.textContent = `Bestellungen möglich bis: ${deadline.toLocaleString('de-DE', options)} Uhr`;
+                            deadlineDisplay.style.display = 'block';
+                            if (new Date() > deadline) {
+                                deadlineDisplay.textContent += " (Frist abgelaufen)";
+                                deadlineDisplay.style.color = '#dc2626';
+                                deadlineDisplay.style.borderColor = '#fecaca';
+                                deadlineDisplay.style.backgroundColor = '#fee2e2';
+                                disableForm("Bestellfrist abgelaufen");
+                            }
+                        }
+                    });
+            }
 
             function setupSortDropdowns() {
                 document.querySelectorAll('.sort-button').forEach(button => {
@@ -124,8 +154,8 @@
             }
 
             function renderItems() {
-                const speisenSearchTerm = document.querySelector('[data-controls="speisen-list"]').value.toLowerCase().trim();
-                const getraenkeSearchTerm = document.querySelector('[data-controls="getraenke-list"]').value.toLowerCase().trim();
+                const speisenSearchTerm = document.querySelector('input[data-controls="speisen-list"]').value.toLowerCase().trim();
+                const getraenkeSearchTerm = document.querySelector('input[data-controls="getraenke-list"]').value.toLowerCase().trim();
                 const processList = (itemList, searchTerm, sortValue) => {
                     let processedItems = itemList.filter(item => 
                         (item.title || item.name).toLowerCase().includes(searchTerm) || 
@@ -171,7 +201,9 @@
                             const variant = item.variants?.find(v => v.name === vName);
                             if (variant) total += parseExtraPrice(variant.description);
                         });
-                        selection.dips.forEach(dText => total += parseExtraPrice(dText));
+                        selection.dips.forEach(dText => {
+                            total += parseExtraPrice(dText);
+                        });
                     }
                 }
                 if (selection.drinkName) {
@@ -244,56 +276,6 @@
                 updateTotalPrice();
             }
 
-            speisenList.addEventListener('click', handleSelection);
-            getraenkeList.addEventListener('click', handleSelection);
-            
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
-                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
-                    renderItems();
-                    if (orderIdToEdit) {
-                        loadOrderForEditing();
-                    }
-                });
-
-            function loadOrderForEditing() {
-                formTitle.textContent = "Bestellung bearbeiten";
-                submitButton.textContent = "Änderungen speichern";
-                
-                fetch(`/api/lists/${listId}/orders/${orderIdToEdit}`)
-                    .then(res => {
-                        if (!res.ok) throw new Error("Bestellung nicht gefunden");
-                        return res.json();
-                    })
-                    .then(order => {
-                        creatorNameInput.value = order.creator;
-                        
-                        const foodButton = speisenList.querySelector(`.item-button[data-id="${order.store_item.id}"]`);
-                        if (foodButton) {
-                            const mainLabel = foodButton.querySelector('.item-details');
-                            mainLabel.click();
-
-                            setTimeout(() => {
-                                (order.store_item.variants || []).forEach(v => {
-                                    const variantButton = foodButton.querySelector(`[data-type="variant"][data-value="${v}"]`);
-                                    variantButton?.click();
-                                });
-                                (order.store_item.dips || []).forEach(d => {
-                                    const dipButton = foodButton.querySelector(`[data-type="dip"][data-value="${d}"]`);
-                                    dipButton?.click();
-                                });
-                            }, 100);
-                        }
-                        
-                        if(order.drink && order.drink.name) {
-                            const drinkButton = getraenkeList.querySelector(`.item-button[data-id="${order.drink.name}"]`);
-                            drinkButton?.querySelector('.item-details').click();
-                        }
-                    });
-            }
-                
             function setupScrollAnimations(container) {
                 const itemsToAnimate = container.querySelectorAll('.item-button');
                 const observer = new IntersectionObserver((entries) => {
@@ -307,6 +289,30 @@
                 }, { threshold: 0.1 });
                 itemsToAnimate.forEach(item => observer.observe(item));
             }
+            
+            function loadOrderForEditing() {
+                formTitle.textContent = "Bestellung bearbeiten";
+                submitButton.textContent = "Änderungen speichern";
+                fetch(`http://localhost:8080/api/lists/${listId}/orders/${orderIdToEdit}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error("Bestellung nicht gefunden");
+                        return res.json();
+                    })
+                    .then(order => {
+                        creatorNameInput.value = order.creator;
+                        const foodButton = speisenList.querySelector(`.item-button[data-id="${order.store_item.id}"]`);
+                        if (foodButton) {
+                            foodButton.querySelector('.item-details').click();
+                            setTimeout(() => {
+                                (order.store_item.variants || []).forEach(v => foodButton.querySelector(`[data-type="variant"][data-value="${v}"]`)?.click());
+                                (order.store_item.dips || []).forEach(d => foodButton.querySelector(`[data-type="dip"][data-value="${d}"]`)?.click());
+                            }, 100);
+                        }
+                        if(order.drink && order.drink.name) {
+                            getraenkeList.querySelector(`.item-button[data-id="${order.drink.name}"]`)?.querySelector('.item-details').click();
+                        }
+                    });
+            }
 
             orderForm.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -316,7 +322,6 @@
                     return;
                 }
                 formError.style.display = 'none';
-
                 const orderPayload = {
                     creator: creator,
                     store_item: { id: selection.storeItemId, variants: Array.from(selection.variants), dips: Array.from(selection.dips) }
@@ -324,23 +329,26 @@
                 if (selection.drinkName) {
                     orderPayload.drink = { name: selection.drinkName };
                 }
-
-                let url = `/api/lists/${listId}/orders`;
+                let url = `http://localhost:8080/api/lists/${listId}/orders`;
                 let method = 'POST';
-
                 if (orderIdToEdit) {
-                    url = `/api/lists/${listId}/orders/${orderIdToEdit}`;
+                    url = `http://localhost:8080/api/lists/${listId}/orders/${orderIdToEdit}`;
                     method = 'PUT';
                     const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
                     orderPayload.editKey = myOrderKeys[orderIdToEdit];
                 }
-
                 fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderPayload)
                 })
-                .then(response => { if (!response.ok) throw new Error('Aktion fehlgeschlagen'); return response.json(); })
+                .then(response => { 
+                    if (!response.ok) {
+                        console.error("Antwort vom Server war nicht OK:", response);
+                        throw new Error('Aktion fehlgeschlagen'); 
+                    }
+                    return response.json(); 
+                })
                 .then(data => {
                     if (method === 'POST') {
                         let myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
@@ -351,8 +359,22 @@
                 })
                 .catch(error => alert('Fehler: ' + error.message));
             });
-
+            
+            // --- INITIALISIERUNG ---
+            loadAndCheckDeadline();
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
+                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
+                    renderItems();
+                    if (orderIdToEdit) {
+                        loadOrderForEditing();
+                    }
+                });
             setupSortDropdowns();
+            speisenList.addEventListener('click', handleSelection);
+            getraenkeList.addEventListener('click', handleSelection);
         });
     </script>
 </body>

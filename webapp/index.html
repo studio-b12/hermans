@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HERMAN's</title>
+    <title>HERMAN's Sammelbestellung</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,16 +11,25 @@
 
     <header>
         <div class="container">
-            <a href="#" class="logo">HERMAN's<span> Liste*</span></a>
+            <a href="#" class="logo">HERMAN's<span> Liste</span></a>
             <nav>
+                <a href="#features">Funktionen</a>
+                <a href="https://github.com/zekrotja/hermans" target="_blank">GitHub</a>
+            </nav>
         </div>
     </header>
 
     <main>
         <section class="hero">
             <div class="container">
-                <h3 class="logo">Erstelle deine eigene Bestell Liste und teile den Link mit anderen.
-                    <br> Ganz <span>Einfach</span>, <span>Schnell</span> und <span>Übersichtlich</span>!</h3>
+                <h1>Erstelle deine eigene Bestellliste</h1>
+                <p class="subtitle">Ganz <span>Einfach</span>, <span>Schnell</span> und <span>Übersichtlich</span>!</p>
+                
+                <div class="deadline-inputs">
+                    <input type="date" id="deadlineDate" title="Datum für die Deadline">
+                    <input type="time" id="deadlineTime" title="Uhrzeit für die Deadline">
+                </div>
+                
                 <button class="btn" id="createListBtn">Liste erstellen</button>
             </div>
         </section>
@@ -54,36 +63,49 @@
             </div>
         </section>
     </main>
-<footer>
-    <div class="container">
-        <p><a href="https://github.com/studio-b12/hermans" target="_blank">GitHub</a></p>
-    </div>
-</footer>
-    <script>
-function brakechain() {
-  var a;
-  a = document.getElementById("div1");
-  a.innerHTML = "&#xf0c1;";
-  setTimeout(function () {
-      a.innerHTML = "&#xf127;";
-    }, 1000);
-}
-brakechain();
-setInterval(brakechain, 2000);
-</script>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 HERMAN's Liste</p>
+        </div>
+    </footer>
 
     <script>
+        // Animation für das Icon
+        function brakechain() {
+            const a = document.getElementById("div1");
+            if (a) {
+                a.innerHTML = "&#xf0c1;"; // link icon
+                setTimeout(() => {
+                    a.innerHTML = "&#xf127;"; // unlink icon
+                }, 1000);
+            }
+        }
+        brakechain();
+        setInterval(brakechain, 2000);
+
+        // Logik zum Erstellen der Liste
         const createListBtn = document.getElementById('createListBtn');
+        const deadlineDateInput = document.getElementById('deadlineDate');
+        const deadlineTimeInput = document.getElementById('deadlineTime');
 
         createListBtn.addEventListener('click', () => {
             createListBtn.disabled = true;
             createListBtn.textContent = 'Liste wird erstellt...';
 
-            fetch('/api/lists', {
+            let body = {};
+            const date = deadlineDateInput.value;
+            const time = deadlineTimeInput.value;
+
+            if (date && time) {
+                const deadline = new Date(`${date}T${time}`);
+                body.deadline = deadline.toISOString();
+            }
+
+            fetch('http://localhost:8080/api/lists', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
             })
             .then(response => {
                 if (!response.ok) {
@@ -99,10 +121,9 @@ setInterval(brakechain, 2000);
                 console.error('Fehler beim Erstellen der Liste:', error);
                 alert('Fehler! Konnte Liste nicht erstellen. Läuft der Server?');
                 createListBtn.disabled = false;
-                createListBtn.textContent = 'Jetzt kostenlos Liste erstellen';
+                createListBtn.textContent = 'Liste erstellen';
             });
         });
     </script>
-
 </body>
 </html>

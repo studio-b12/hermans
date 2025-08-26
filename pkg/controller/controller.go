@@ -2,8 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
-	"log/slog"
 	"path/filepath"
 	"slices"
 	"time"
@@ -16,32 +14,11 @@ import (
 	"github.com/zekrotja/hermans/pkg/scraper"
 )
 
-type ErrorCode struct{ elk.ErrorCode }
-
-var (
-	ErrInvalidStoreItem = elk.ErrorCode("invalid store item")
-	ErrInvalidVariants  = elk.ErrorCode("invalid variants")
-	ErrInvalidDips      = elk.ErrorCode("invalid dips")
-)
-
-type ListError []string
-
-func (e ListError) Error() string { return fmt.Sprintf("list error: %v", []string(e)) }
-
-type Database interface {
-	CreateOrderList(list *model.OrderList) error
-	GetOrderList(id string) (*model.OrderList, error)
-	DeleteOrderList(id string) error
-	CreateOrder(orderListId string, order *model.Order) error
-	GetOrders(orderListId string) ([]*model.Order, error)
-	GetOrder(orderListId, orderId string) (*model.Order, error)
-	UpdateOrder(orderListId string, order *model.Order) error
-	DeleteOrder(orderListId, orderId string) error
-}
-
 type Controller struct {
-	db          Database
-	validator   *validator.Validate
+	db Database
+
+	validator *validator.Validate
+
 	scrapeCache *cache.LocalCache[*scraper.Data]
 }
 
@@ -50,6 +27,7 @@ func New(cacheDir string, db Database) (*Controller, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	t := &Controller{
 		db:          db,
 		scrapeCache: scrapeDb,
@@ -58,34 +36,17 @@ func New(cacheDir string, db Database) (*Controller, error) {
 	return t, nil
 }
 
-func (t *Controller) StartScrapingScheduler(interval string) {
-	duration, err := time.ParseDuration(interval)
-	if err != nil {
-		slog.Error("invalid scrape interval duration, falling back", "err", err, "interval", interval)
-		duration = 168 * time.Hour
-	}
-	ticker := time.NewTicker(duration)
-	defer ticker.Stop()
-	for {
-		<-ticker.C
-		slog.Info("ticker received, starting scheduled scrape...")
-		if _, err := t.Scrape(); err != nil {
-			slog.Error("scheduled scrape failed", "err", err)
-		} else {
-			slog.Info("scheduled scrape finished successfully")
-		}
-	}
-}
-
 func (t *Controller) Scrape() (*scraper.Data, error) {
 	data, err := scraper.ScrapeAll()
 	if err != nil {
 		return nil, err
 	}
+
 	err = t.scrapeCache.Store(data)
 	if err != nil {
 		return nil, err
 	}
+
 	return data, nil
 }
 
@@ -94,34 +55,76 @@ func (t *Controller) GetScrapedData() (*scraper.Data, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if data == nil {
 		data, err = t.Scrape()
 		if err != nil {
 			return nil, err
 		}
 	}
-	surpriseCat := []*scraper.Category{{Id: "__etc", Name: "Etc", Items: []*scraper.StoreItem{{Id: "__surprise", Title: "🎉 Überrasch mich 🎉", Description: "Die bestellende Person sucht sich etwas für dich aus 😎", Variants: []*scraper.Variant{{Name: "vegetarisch", Description: "Vegetarisch"}, {Name: "ohne zwiebeln", Description: "one Zwiebeln (wenn vorhanden)"}}}}}}
+
+	surpriseCat := []*scraper.Category{
+		{
+			Id:   "__etc",
+			Name: "Etc",
+			Items: []*scraper.StoreItem{
+				{
+					Id:          "__surprise",
+					Title:       "🎉 Überrasch mich 🎉",
+					Description: "Die bestellende Person sucht sich etwas für dich aus 😎",
+					Variants: []*scraper.Variant{
+						{
+							Name:        "vegetarisch",
+							Description: "Vegetarisch",
+						},
+						{
+							Name:        "ohne zwiebeln",
+							Description: "one Zwiebeln (wenn vorhanden)",
+						},
+					},
+				},
+			},
+		},
+	}
 	data.Categories = append(surpriseCat, data.Categories...)
+
 	return data, nil
 }
 
-func (t *Controller) CreateOrderList() (*model.OrderList, error) {
+func (t *Controller) CreateOrderList(deadline *time.Time) (*model.OrderList, error) {
 	list := model.OrderList{
-		Id:      uuid.New().String(),
-		Created: time.Now(),
+		Id:       uuid.New().String(),
+		Created:  time.Now(),
+		Deadline: deadline,
 	}
 	err := t.db.CreateOrderList(&list)
+
 	if err != nil {
 		return nil, err
 	}
 	return &list, nil
 }
 
+// Debug
+func (t *Controller) ClearAllData() error {
+	return t.db.ClearAllData()
+}
+
+var ErrDeadlineExceeded = errors.New("deadline for this order list has been exceeded")
+
 func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model.Order, error) {
+	list, err := t.db.GetOrderList(orderListId)
+	if err != nil {
+		return nil, err
+	}
+	if list.Deadline != nil && time.Now().After(*list.Deadline) {
+		return nil, ErrDeadlineExceeded
+	}
+
 	order.Id = uuid.New().String()
 	order.Created = time.Now()
 	order.EditKey = uuid.New().String()
-	err := t.validator.Struct(order)
+	err = t.validator.Struct(order)
 	if err != nil {
 		return nil, err
 	}
@@ -166,21 +169,29 @@ func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	orderList.Orders, err = t.db.GetOrders(orderListId)
 	if err != nil {
 		return nil, err
 	}
+
 	return orderList, nil
+}
+
+func (t *Controller) DeleteOrderList(orderListId string) error {
+	err := t.db.DeleteOrderList(orderListId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (t *Controller) GetOrder(orderListId, orderId string) (*model.Order, error) {
 	return t.db.GetOrder(orderListId, orderId)
 }
 
-func (t *Controller) DeleteOrderList(orderListId string) error {
-	return t.db.DeleteOrderList(orderListId)
-}
-
+// UpdateOrder bearbeitet eine Bestellung nach der Prüfung des geheimen Schlüssels.
 func (t *Controller) UpdateOrder(orderListId, orderId, editKey string, updatedOrder *model.Order) (*model.Order, error) {
 	order, err := t.db.GetOrder(orderListId, orderId)
 	if err != nil {
@@ -200,6 +211,7 @@ func (t *Controller) UpdateOrder(orderListId, orderId, editKey string, updatedOr
 	return order, nil
 }
 
+// DeleteOrder löscht eine Bestellung nach der Prüfung von dem geheimen Schlüssel.
 func (t *Controller) DeleteOrder(orderListId, orderId, editKey string) error {
 	order, err := t.db.GetOrder(orderListId, orderId)
 	if err != nil {
@@ -216,6 +228,7 @@ func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, er
 	if err != nil {
 		return nil, false, err
 	}
+
 	for _, category := range data.Categories {
 		for _, si = range category.Items {
 			if si.Id == id {
@@ -223,5 +236,6 @@ func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, er
 			}
 		}
 	}
+
 	return nil, false, nil
 }

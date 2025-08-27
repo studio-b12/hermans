@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"path/filepath"
 	"slices"
 	"time"
@@ -90,66 +91,87 @@ func (t *Controller) GetScrapedData() (*scraper.Data, error) {
 	return data, nil
 }
 
-func (t *Controller) CreateOrderList() (*model.OrderList, error) {
+func (t *Controller) CreateOrderList(deadline *time.Time) (*model.OrderList, error) {
 	list := model.OrderList{
-		Id:      uuid.New().String(),
-		Created: time.Now(),
+		Id:       uuid.New().String(),
+		Created:  time.Now(),
+		Deadline: deadline,
 	}
-
 	err := t.db.CreateOrderList(&list)
+
 	if err != nil {
 		return nil, err
 	}
-
 	return &list, nil
 }
 
+// Debug
+func (t *Controller) ClearAllData() error {
+	return t.db.ClearAllData()
+}
+
+func (c *Controller) GetOrderList(orderListId string) (*model.OrderList, error) {
+	return c.db.GetOrderList(orderListId)
+}
+
+var ErrDeadlineExceeded = errors.New("deadline for this order list has been exceeded")
+
 func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model.Order, error) {
+	list, err := t.db.GetOrderList(orderListId)
+	if err != nil {
+		return nil, err
+	}
+	if list.Deadline != nil && time.Now().After(*list.Deadline) {
+		return nil, ErrDeadlineExceeded
+	}
+
 	order.Id = uuid.New().String()
 	order.Created = time.Now()
+	order.EditKey = uuid.New().String()
 
-	err := t.validator.Struct(order)
+	err = t.validator.Struct(order)
 	if err != nil {
 		return nil, err
 	}
 
-	item, ok, err := t.getStoreItem(order.StoreItem.Id)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", order.StoreItem.Id)
-	}
-
-	var invalidVariants ListError
-	for _, variant := range order.StoreItem.Variants {
-		if !item.VariantsContain(variant) {
-			invalidVariants = append(invalidVariants, variant)
+	for _, storeItem := range order.StoreItems {
+		item, ok, err := t.getStoreItem(storeItem.Id)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if len(invalidVariants) > 0 {
-		return nil, elk.Wrap(ErrInvalidVariants, invalidVariants, "invalid variants")
-	}
-
-	var invalidDips ListError
-	for _, dip := range order.StoreItem.Dips {
-		if !slices.Contains(item.Dips, dip) {
-			invalidDips = append(invalidDips, dip)
+		if !ok {
+			return nil, elk.NewErrorf(ErrInvalidStoreItem, "invalid store item ID: %s", storeItem.Id)
 		}
-	}
-	if len(invalidDips) > 0 {
-		return nil, elk.Wrap(ErrInvalidDips, invalidDips, "invalid dips")
+
+		var invalidVariants ListError
+		for _, variant := range storeItem.Variants {
+			if !item.VariantsContain(variant) {
+				invalidVariants = append(invalidVariants, variant)
+			}
+		}
+		if len(invalidVariants) > 0 {
+			return nil, elk.Wrap(ErrInvalidVariants, invalidVariants, "invalid variants")
+		}
+
+		var invalidDips ListError
+		for _, dip := range storeItem.Dips {
+			if !slices.Contains(item.Dips, dip) {
+				invalidDips = append(invalidDips, dip)
+			}
+		}
+		if len(invalidDips) > 0 {
+			return nil, elk.Wrap(ErrInvalidDips, invalidDips, "invalid dips")
+		}
 	}
 
 	err = t.db.CreateOrder(orderListId, order)
 	if err != nil {
 		return nil, err
 	}
-
 	return order, nil
 }
 
-func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
+func (t *Controller) GetOrders(orderListId string) ([]*model.Order, error) {
 	orderList, err := t.db.GetOrderList(orderListId)
 	if err != nil {
 		return nil, err
@@ -160,7 +182,7 @@ func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
 		return nil, err
 	}
 
-	return orderList, nil
+	return t.db.GetOrders(orderListId)
 }
 
 func (t *Controller) DeleteOrderList(orderListId string) error {
@@ -170,6 +192,42 @@ func (t *Controller) DeleteOrderList(orderListId string) error {
 	}
 
 	return nil
+}
+
+func (t *Controller) GetOrder(orderListId, orderId string) (*model.Order, error) {
+	return t.db.GetOrder(orderListId, orderId)
+}
+
+// UpdateOrder bearbeitet eine Bestellung nach der Prüfung des geheimen Schlüssels.
+func (t *Controller) UpdateOrder(orderListId, orderId, editKey string, updatedOrder *model.Order) (*model.Order, error) {
+	order, err := t.db.GetOrder(orderListId, orderId)
+	if err != nil {
+		return nil, err
+	}
+	if order.EditKey != editKey {
+		return nil, errors.New("invalid edit key: access denied")
+	}
+
+	order.Creator = updatedOrder.Creator
+	order.StoreItems = updatedOrder.StoreItems
+	order.Drink = updatedOrder.Drink
+
+	if err := t.db.UpdateOrder(orderListId, order); err != nil {
+		return nil, err
+	}
+	return order, nil
+}
+
+// DeleteOrder löscht eine Bestellung nach der Prüfung von dem geheimen Schlüssel.
+func (t *Controller) DeleteOrder(orderListId, orderId, editKey string) error {
+	order, err := t.db.GetOrder(orderListId, orderId)
+	if err != nil {
+		return err
+	}
+	if order.EditKey != editKey {
+		return errors.New("invalid edit key: access denied")
+	}
+	return t.db.DeleteOrder(orderListId, orderId)
 }
 
 func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, err error) {
@@ -187,4 +245,15 @@ func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, er
 	}
 
 	return nil, false, nil
+}
+
+//Feedback\\
+
+func (t *Controller) CreateFeedback(feedback *model.Feedback) (*model.Feedback, error) {
+	feedback.Id = uuid.New().String()
+	feedback.Timestamp = time.Now()
+	if err := t.validator.Struct(feedback); err != nil {
+		return nil, err
+	}
+	return feedback, t.db.CreateFeedback(feedback)
 }

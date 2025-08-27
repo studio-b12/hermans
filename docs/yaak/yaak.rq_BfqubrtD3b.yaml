@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_BfqubrtD3b
+createdAt: 2025-08-26T08:05:19.946514900
+updatedAt: 2025-08-26T08:10:04.917663400
+workspaceId: wk_MbGccW82tQ
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Database Clear
+sortPriority: -438877167758.49927
+url: ${[ HOST ]}/api/dev/clearall
+urlParameters: []

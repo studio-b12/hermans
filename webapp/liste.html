@@ -6,80 +6,154 @@
     <title>Bestellung aufgeben</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="liste-body">
     <div class="container">
-        <form id="orderForm">
-            <div class="menu-wrapper">
-                <div class="category-card">
-                    <div class="category-header"><h2 class="category-title">Speisen</h2></div>
-                    <div class="controls-wrapper">
-                        <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
-                        <div class="sort-dropdown-wrapper">
-                            <button type="button" class="sort-button" data-controls="speisen-sort-menu">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
-                                <span>Sortieren</span>
-                            </button>
-                            <div class="sort-dropdown-menu" id="speisen-sort-menu">
-                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
-                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
-                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
+        <div class="deadline-display" id="deadlineDisplay" style="display: none;"></div>
+        <div class="page-wrapper">
+            <main class="main-content">
+                <form id="orderForm">
+                    <div class="menu-wrapper">
+                        <div class="category-card">
+                            <div class="category-header"><h2 class="category-title">Speisen</h2></div>
+                            <div class="controls-wrapper">
+                                <input type="search" class="search-input" data-controls="speisen-list" placeholder="Speisen durchsuchen...">
+                                <div class="sort-dropdown-wrapper">
+                                    <button type="button" class="sort-button" data-controls="speisen-sort-menu">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
+                                        <span>Sortieren</span>
+                                    </button>
+                                    <div class="sort-dropdown-menu" id="speisen-sort-menu">
+                                        <a href="#" class="sort-option selected" data-value="default">Standard</a>
+                                        <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
+                                        <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
+                                    </div>
+                                </div>
                             </div>
+                            <div class="items-list" id="speisen-list"></div>
+                        </div>
+                        <div class="category-card">
+                            <div class="category-header"><h2 class="category-title">Getränke</h2></div>
+                            <div class="controls-wrapper">
+                                <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
+                                <div class="sort-dropdown-wrapper">
+                                    <button type="button" class="sort-button" data-controls="getraenke-sort-menu">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
+                                        <span>Sortieren</span>
+                                    </button>
+                                    <div class="sort-dropdown-menu" id="getraenke-sort-menu">
+                                        <a href="#" class="sort-option selected" data-value="default">Standard</a>
+                                        <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
+                                        <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="items-list" id="getraenke-list"></div>
                         </div>
                     </div>
-                    <div class="items-list" id="speisen-list"></div>
-                </div>
-
-                <div class="category-card">
-                    <div class="category-header"><h2 class="category-title">Getränke</h2></div>
-                    <div class="controls-wrapper">
-                        <input type="search" class="search-input" data-controls="getraenke-list" placeholder="Getränke durchsuchen...">
-                        <div class="sort-dropdown-wrapper">
-                            <button type="button" class="sort-button" data-controls="getraenke-sort-menu">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25" /></svg>
-                                <span>Sortieren</span>
-                            </button>
-                            <div class="sort-dropdown-menu" id="getraenke-sort-menu">
-                                <a href="#" class="sort-option selected" data-value="default">Standard</a>
-                                <a href="#" class="sort-option" data-value="price-asc">Preis aufsteigend</a>
-                                <a href="#" class="sort-option" data-value="price-desc">Preis absteigend</a>
-                            </div>
+                    <div class="submission-card">
+                        <h3 id="form-title">Deine Bestellung abschließen</h3>
+                        <input type="text" id="creatorName" placeholder="Dein Name" required>
+                        <div class="total-price">Gesamt: <span id="totalPriceSpan">0,00 €</span></div>
+                        <button type="submit" class="btn" id="submit-button">Bestellung abschicken</button>
+                        <p id="formError" style="color:red;display:none;margin-top:10px;">Bitte lege mindestens eine Speise in den Warenkorb und gib deinen Namen ein.</p>
+                    </div>
+                </form>
+            </main>
+            <aside class="sidebar">
+                <div class="liquid-card" id="cart-card-sidebar">
+                    <h3 class="liquid-header">Warenkorb</h3>
+                    <div class="items-list" id="cart-list">
+                        <div id="cart-placeholder" class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-5.514A1.875 1.875 0 0018.665 6H5.216a1.875 1.875 0 00-1.838 2.335L4.5 12.75M7.5 14.25h11.218" /></svg>
+                            <p>Dein Warenkorb ist leer.</p>
                         </div>
                     </div>
-                    <div class="items-list" id="getraenke-list"></div>
                 </div>
-            </div>
+                <div class="liquid-card" style="margin-top: 30px;">
+                    <h3 class="liquid-header">Zuletzt bestellt</h3>
+                    <div class="items-list" id="history-list">
+                        <div id="history-placeholder" class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <p>Hier erscheinen deine letzten Bestellungen.</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
 
-            <div class="submission-card">
-                <h3>Dein Name</h3>
-                <input type="text" id="creatorName" placeholder="Max Mustermann" required>
-                <div class="total-price">Gesamt: <span id="totalPriceSpan">0,00 €</span></div>
-                <button type="submit" class="btn">Bestellung abschicken</button>
-                <p id="formError" style="color:red;display:none;margin-top:10px;">Bitte wähle mindestens eine Speise und gib deinen Namen ein.</p>
+    <button class="feedback-btn" id="feedbackBtn" title="Feedback geben">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAElklEQVR4nO2Za6gVVRTHf14jr1q+SrNbJnFFiupa9ACViOJGL0jKpE9aUYo9LCusKNMksIjKikp6kJR+ySA1isgESyjU3tHrQ6WVzzItblne6k6sy39gMedxZ8+cM6fg/GHgnNl7r7Vmz15r/dcaaKKJJopAP2ACcC3wLLAe+A7YC/yta6/urdec2UCH1jYcZwCPA9uAKOO1TTJOL9p428FLgfcSBn0PLAduADqBdmA40B84SL/bNWZzVgA/JGRsBi4p4i2dJmWx4j3AQ7qfRXk/rTUZPzu5m4BT62B/747eD/wlRTu1q6011DEQuBHYJR2ma7F01wQjgbck3Jz2YWAw9cMhwCPSFSk4mA25MAb4SgJ3AGdSHM7Sm49kw9FZBR0BfCNBnwBtFI824FPZ8DUwKst53SQB7yviNAojgA9ly8ZQv3xUC7cAo3MYMQD4CHiZfDgS2CqbzH9S4WygB+hWaMyDy11IPbkGybdbtpn/VEWLe40LyY+17kEeq4G8RZL1gWytiKkuS5uf5MFY4B/tYqSElzfvDHJ0yBhARcT5Yg75cY9krdAORjpqeTFXstZVyxl2/rqAQ3Mqa1GgMIXnANfptx21vBgK/C5by6aE2VIWEmHa5MSWKC/Ujs8Sd4qUh4xPDQP266jdAcwEpgHnAZOAk4DDA/SukXyTU4LnNWgPlAZXpKDod7n5y/uYaw9pD5UG8RteVm4wjlYTA8L0nwnGuhJ4CngQuC0RMIwpLACWAM9o7uduvQWDcSl1T3bJugS7NRhCAyaKg8XHyI5IWpzrqPtnAQ+BknQkplyCeHctGxPoJxu11gLFZSnWzHJh+VU5cAgGaK3ZXIL9GswS61udj1k0ubnK3KVu3qKMBVmrZPxRbnC7Bo3XZMV91c6u0KU5V+bQM7ra0YqTljlSVixIQUfW1iA5TpYM6xuU4GkN3pRDwQbJuFj/rRh6QYzVcgmKZpEiV1ZcLxnPlRu8xjlf1hK1W7X2MPW4fnXh1Y7uFOAUVyJkxSuScXW5wVEy4oCKmVBcJOHWhHvbPYAxhXfc/5fkpFFgyI0x3LGEirXS61JwJ+FYksjUO8WmY+41xzl6FMgiPG7R2jeogk7XrxpCGD52YXVZhfJ4rNssu17McHy3J/ywT4d9IlCJUY4vlbH7wgzVFfcG6ljs6FCf+adDftKT0qiiMEk+HEIume+I3Hgaj6Ncn/iBkIXmnKsdGTyWxmGk621tyMAFe9uicW/LduMEiscYR/Wt23hYVkFD1Hs1Qb8B0ykOncCPjubn6a/1YqBjtpEqvXpiqBhyj8sXmd9EOcysRp1rAMsR85TDIkXOu/WhqKZodz2vWqFFVaax5V/cWzeKcyJ1wlVSYtGsXKFjZHOVqLx9mjte1eNgHc8RuneBaMZK91HHP8D51BlvVmjBHOzaM1mub9U+skRcdxyjjHog4Xi24+/KoJ9Ui9snuteAL0RDutRQ26MQas77pN7wcRSMpYk+kh2V24F97iNMSAelIehwHY9b9e1kd6LeiKu//yz6u1ZP8tqsNun/AvNdVt+qxsFClatNNEFl/AslWJwqqgXIDAAAAABJRU5ErkJggg==" alt="Feedback Icon" style="width:24px; height:24px;">
+</button>
+
+<div class="modal-backdrop" id="feedbackModalBackdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Feedback geben</h3>
+            <button class="modal-close" id="feedbackModalCloseBtn">&times;</button>
+        </div>
+        <form id="feedbackForm">
+            <div class="feedback-type">
+                <label><input type="radio" name="feedbackType" value="Bug Report" checked> Bug Report</label>
+                <label><input type="radio" name="feedbackType" value="Vorschlag"> Vorschlag</label>
             </div>
+            <textarea id="feedbackMessage" placeholder="Dein Feedback..." required></textarea>
+            <button type="submit" class="btn">Senden</button>
         </form>
     </div>
-    
+</div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const speisenList = document.getElementById('speisen-list');
             const getraenkeList = document.getElementById('getraenke-list');
+            const cartList = document.getElementById('cart-list');
+            const historyList = document.getElementById('history-list');
+            const cartCard = document.getElementById('cart-card-sidebar');
+            const cartPlaceholder = document.getElementById('cart-placeholder');
+            const historyPlaceholder = document.getElementById('history-placeholder');
             const orderForm = document.getElementById('orderForm');
             const totalPriceSpan = document.getElementById('totalPriceSpan');
             const creatorNameInput = document.getElementById('creatorName');
             const formError = document.getElementById('formError');
-            const apiUrl = '/api/items';
+            const formTitle = document.getElementById('form-title');
+            const submitButton = document.getElementById('submit-button');
+            const deadlineDisplay = document.getElementById('deadlineDisplay');
+            const apiUrl = 'http://localhost:8080/api/items';
             const params = new URLSearchParams(window.location.search);
             const listId = params.get('id');
-            
+            const orderIdToEdit = params.get('edit');
             const itemDataMap = new Map();
-            let allSpeisen = [];
-            let allGetraenke = [];
-            let speisenSortValue = 'default';
-            let getraenkeSortValue = 'default';
-            
-            let selection = {
-                storeItemId: null, variants: new Set(), dips: new Set(), drinkName: null,
-            };
+            let allSpeisen = [], allGetraenke = [];
+            let speisenSortValue = 'default', getraenkeSortValue = 'default';
+            let cart = [];
+            let selectedDrink = null;
+
+            function disableForm(message) {
+                orderForm.querySelectorAll('button, input').forEach(el => el.disabled = true);
+                document.querySelectorAll('.search-input, .sort-button').forEach(el => el.disabled = true);
+                submitButton.textContent = message;
+                formTitle.textContent = "Bestellungen geschlossen";
+            }
+
+            function loadAndCheckDeadline() {
+                if (!listId) return;
+                fetch(`http://localhost:8080/api/lists/${listId}`)
+                    .then(res => res.json())
+                    .then(listData => {
+                        if (listData.deadline) {
+                            const deadline = new Date(listData.deadline);
+                            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+                            deadlineDisplay.textContent = `Bestellungen möglich bis: ${deadline.toLocaleString('de-DE', options)} Uhr`;
+                            deadlineDisplay.style.display = 'block';
+                            if (new Date() > deadline) {
+                                deadlineDisplay.textContent += " (Frist abgelaufen)";
+                                deadlineDisplay.classList.add('expired');
+                                disableForm("Bestellfrist abgelaufen");
+                            }
+                        }
+                    });
+            }
 
             function setupSortDropdowns() {
                 document.querySelectorAll('.sort-button').forEach(button => {
@@ -88,40 +162,31 @@
                         const menuId = button.dataset.controls;
                         const menu = document.getElementById(menuId);
                         const isActive = menu.classList.contains('active');
-                        
                         document.querySelectorAll('.sort-dropdown-menu.active').forEach(m => m.classList.remove('active'));
                         document.querySelectorAll('.sort-button.active').forEach(b => b.classList.remove('active'));
-
                         if (!isActive) {
                            menu.classList.add('active');
                            button.classList.add('active');
                         }
                     });
                 });
-
                 document.querySelectorAll('.sort-dropdown-wrapper').forEach(wrapper => {
                     wrapper.addEventListener('click', e => e.stopPropagation());
                 });
-
                 document.querySelectorAll('.sort-option').forEach(option => {
                     option.addEventListener('click', (e) => {
                         e.preventDefault();
                         const menu = option.closest('.sort-dropdown-menu');
-                        const listId = menu.id.includes('speisen') ? 'speisen-list' : 'getraenke-list';
-                        
-                        if (listId === 'speisen-list') speisenSortValue = option.dataset.value;
+                        const targetListId = menu.id.includes('speisen') ? 'speisen-list' : 'getraenke-list';
+                        if (targetListId === 'speisen-list') speisenSortValue = option.dataset.value;
                         else getraenkeSortValue = option.dataset.value;
-                        
                         menu.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('selected'));
                         option.classList.add('selected');
-                        
                         menu.classList.remove('active');
                         menu.previousElementSibling.classList.remove('active');
-                        
                         renderItems();
                     });
                 });
-
                 window.addEventListener('click', () => {
                     document.querySelectorAll('.sort-dropdown-menu.active').forEach(menu => menu.classList.remove('active'));
                     document.querySelectorAll('.sort-button.active').forEach(btn => btn.classList.remove('active'));
@@ -129,9 +194,8 @@
             }
 
             function renderItems() {
-                const speisenSearchTerm = document.querySelector('[data-controls="speisen-list"]').value.toLowerCase().trim();
-                const getraenkeSearchTerm = document.querySelector('[data-controls="getraenke-list"]').value.toLowerCase().trim();
-
+                const speisenSearchTerm = document.querySelector('input[data-controls="speisen-list"]').value.toLowerCase().trim();
+                const getraenkeSearchTerm = document.querySelector('input[data-controls="getraenke-list"]').value.toLowerCase().trim();
                 const processList = (itemList, searchTerm, sortValue) => {
                     let processedItems = itemList.filter(item => 
                         (item.title || item.name).toLowerCase().includes(searchTerm) || 
@@ -139,29 +203,22 @@
                     );
                     if (sortValue === 'price-asc') processedItems.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
                     else if (sortValue === 'price-desc') processedItems.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-                    
                     return processedItems;
                 };
-
                 speisenList.innerHTML = '';
                 getraenkeList.innerHTML = '';
-                
                 processList(allSpeisen, speisenSearchTerm, speisenSortValue).forEach(item => speisenList.appendChild(createItemButton(item)));
                 processList(allGetraenke, getraenkeSearchTerm, getraenkeSortValue).forEach(item => getraenkeList.appendChild(createItemButton(item)));
-                
-                setupScrollAnimations(speisenList);
-                setupScrollAnimations(getraenkeList);
             }
             
             function parsePrice(priceValue) {
-                if (typeof priceValue === 'string') {
-                    const cleanedString = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
-                    const price = parseFloat(cleanedString);
-                    return isNaN(price) ? 0 : price;
-                }
-                return typeof priceValue === 'number' ? priceValue : 0;
+                if (typeof priceValue === 'number') return priceValue;
+                if (typeof priceValue !== 'string') return 0;
+                const cleanedString = priceValue.replace(/[^0-9,-]/g, '').replace(',', '.').trim();
+                const price = parseFloat(cleanedString);
+                return isNaN(price) ? 0 : price;
             }
-
+            
             function parseExtraPrice(text) {
                 if (typeof text !== 'string') return 0;
                 const match = text.match(/\(\+?\s*([0-9,]+)\s*€\)/);
@@ -171,26 +228,47 @@
 
             const formatPrice = (price) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
             
+            function renderCart() {
+                cartList.innerHTML = '';
+                cartPlaceholder.style.display = cart.length === 0 && !selectedDrink ? 'block' : 'none';
+                cart.forEach((item, index) => {
+                    const itemDetails = itemDataMap.get(item.id);
+                    const extras = [...item.variants, ...item.dips].join(', ');
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'cart-item';
+                    cartItem.innerHTML = `<div class="cart-item-icon"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M19.5,8.5c-0.2-1-1-1.8-2-1.8H6.4c-1,0-1.8,0.8-2,1.8L3.6,13.2C3.2,15.4,4.9,18,7.2,18h9.6c2.3,0,4.1-2.6,3.7-4.8L19.5,8.5z M7,20c-1.1,0-2,0.9-2,2s0.9,2,2,2s2-0.9,2-2S8.1,20,7,20z M17,20c-1.1,0-2,0.9-2,2s0.9,2,2,2s2-0.9,2-2S18.1,20,17,20z"/></svg></div><div class="cart-item-info"><div class="food-name">${itemDetails.title}</div>${extras ? `<div class="extras">${extras}</div>` : ''}</div><button type="button" class="cart-item-remove" data-cart-index="${index}">×</button>`;
+                    cartList.appendChild(cartItem);
+                });
+                if (selectedDrink) {
+                    const drinkDetails = itemDataMap.get(selectedDrink.name);
+                    const drinkItem = document.createElement('div');
+                    drinkItem.className = 'cart-item';
+                    drinkItem.innerHTML = `<div class="cart-item-icon"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7.5,16c-1.4,0-2.5,1.1-2.5,2.5S6.1,21,7.5,21s2.5-1.1,2.5-2.5S8.9,16,7.5,16z M16.5,16c-1.4,0-2.5,1.1-2.5,2.5 s1.1,2.5,2.5,2.5s2.5-1.1,2.5-2.5S17.9,16,16.5,16z M20,4H4L3,2H0v2h2l3.6,7.6L5.2,14c-0.1,0.3,0,0.5,0.2,0.7 c0.2,0.2,0.5,0.3,0.7,0.3h10.3v-2H6.2l0.9-2H17l4-7L20,4z"/></svg></div><div class="cart-item-info"><div class="food-name">${drinkDetails.name}</div></div><button type="button" class="cart-item-remove" data-drink="true">×</button>`;
+                    cartList.appendChild(drinkItem);
+                }
+                updateTotalPrice();
+            }
+
             function updateTotalPrice() {
                 let total = 0;
-                if (selection.storeItemId) {
-                    const item = itemDataMap.get(selection.storeItemId);
-                    if (item) {
-                        total += parsePrice(item.price);
-                        selection.variants.forEach(vName => {
-                            const variant = item.variants?.find(v => v.name === vName);
-                            if (variant) total += parseExtraPrice(variant.description);
-                        });
-                        selection.dips.forEach(dText => total += parseExtraPrice(dText));
-                    }
-                }
-                if (selection.drinkName) {
-                    const drink = itemDataMap.get(selection.drinkName);
-                    if (drink) total += parsePrice(drink.price);
+                cart.forEach(item => {
+                    const itemDetails = itemDataMap.get(item.id);
+                    if(!itemDetails) return;
+                    let itemPrice = parsePrice(itemDetails.price);
+                    (item.variants || []).forEach(vName => {
+                        const variantDetails = itemDetails.variants.find(v => v.name === vName);
+                        if(variantDetails) itemPrice += parseExtraPrice(variantDetails.description);
+                    });
+                    (item.dips || []).forEach(dName => itemPrice += parseExtraPrice(dName));
+                    total += itemPrice;
+                });
+                if (selectedDrink) {
+                    const drinkDetails = itemDataMap.get(selectedDrink.name);
+                    if (drinkDetails) total += parsePrice(drinkDetails.price);
                 }
                 totalPriceSpan.textContent = formatPrice(total);
             }
-            
+
             function renderOptionButtons(title, options, groupName) {
                 if (!options || options.length === 0) return '';
                 return `<div class="options-group"><h5>${title}</h5><div class="options-grid">${
@@ -205,112 +283,141 @@
             
             function createItemButton(item) {
                 itemDataMap.set(item.id || item.name, item);
-                const button = document.createElement('button');
-                button.type = 'button';
+                const button = document.createElement('div');
                 button.className = 'item-button';
                 button.dataset.id = item.id || item.name;
                 button.dataset.type = item.type;
                 let optionsHTML = '';
                 if (item.type === 'speise') {
-                    optionsHTML = `<div class="item-options">${renderOptionButtons('Varianten', item.variants, 'variant')}${renderOptionButtons('Dips', item.dips, 'dip')}</div>`;
+                    optionsHTML = `<div class="item-options">${renderOptionButtons('Varianten', item.variants, 'variant')}${renderOptionButtons('Dips', item.dips, 'dip')}<button type="button" class="btn-add-to-cart">+ Zum Warenkorb</button></div>`;
                 }
-                button.innerHTML = `<div class="item-details"><h4>${item.title || item.name}</h4><p>${item.description}</p><div class="price">${item.price}</div></div>${optionsHTML}`;
+                button.innerHTML = `<div class="item-details"><h4>${item.title || item.name}</h4><p>${item.description}</p><div class="price">${formatPrice(parsePrice(item.price))}</div></div>${optionsHTML}`;
                 return button;
             }
 
+            function handleAddToCart(itemButton) {
+                const itemId = itemButton.dataset.id;
+                const variants = [];
+                const dips = [];
+                itemButton.querySelectorAll('.option-button.selected[data-type="variant"]').forEach(btn => variants.push(btn.dataset.value));
+                itemButton.querySelectorAll('.option-button.selected[data-type="dip"]').forEach(btn => dips.push(btn.dataset.value));
+                cart.push({ id: itemId, variants: variants, dips: dips });
+                renderCart();
+                itemButton.classList.remove('expanded');
+                itemButton.querySelectorAll('.option-button.selected').forEach(btn => btn.classList.remove('selected'));
+            }
+
             function handleSelection(e) {
-                const target = e.target;
-                const itemButton = target.closest('.item-button');
+                const itemButton = e.target.closest('.item-button');
                 if (!itemButton) return;
-                const id = itemButton.dataset.id;
-                const type = itemButton.dataset.type;
-                const isMainButtonClick = target.closest('.item-details');
-                if (isMainButtonClick) {
-                    const listContainer = type === 'speise' ? speisenList : getraenkeList;
-                    const currentlySelected = listContainer.querySelector('.item-button.selected');
-                    if (currentlySelected && currentlySelected !== itemButton) {
-                        currentlySelected.classList.remove('selected', 'expanded');
-                    }
-                    itemButton.classList.toggle('selected');
-                    itemButton.classList.toggle('expanded', itemButton.classList.contains('selected'));
-                    if (type === 'speise') {
-                        selection.storeItemId = itemButton.classList.contains('selected') ? id : null;
-                        selection.variants.clear();
-                        selection.dips.clear();
-                    } else {
-                        selection.drinkName = itemButton.classList.contains('selected') ? id : null;
-                    }
-                }
-                const optionButton = target.closest('.option-button');
-                if (optionButton) {
-                    const optionType = optionButton.dataset.type;
-                    const value = optionButton.dataset.value;
-                    if (optionType === 'variant' || optionType === 'dip') {
-                        optionButton.classList.toggle('selected');
-                        const set = optionType === 'variant' ? selection.variants : selection.dips;
-                        if (set.has(value)) set.delete(value); else set.add(value);
-                    }
-                }
-                updateTotalPrice();
-            }
 
-            speisenList.addEventListener('click', handleSelection);
-            getraenkeList.addEventListener('click', handleSelection);
-            
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
-                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
-                    renderItems();
-                });
+                if (e.target.classList.contains('btn-add-to-cart')) {
+                    handleAddToCart(itemButton);
+                    return;
+                }
                 
-            document.querySelectorAll('.search-input').forEach(input => {
-                input.addEventListener('input', renderItems);
-            });
+                const type = itemButton.dataset.type;
+                if (type === 'getraenk' && e.target.closest('.item-details')) {
+                    getraenkeList.querySelectorAll('.item-button.selected').forEach(btn => btn.classList.remove('selected'));
+                    itemButton.classList.add('selected');
+                    selectedDrink = { name: itemButton.dataset.id };
+                    renderCart();
+                    return;
+                }
 
-            function setupScrollAnimations(container) {
-                const itemsToAnimate = container.querySelectorAll('.item-button');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach((entry, index) => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.transitionDelay = `${index * 50}ms`;
-                            entry.target.classList.add('is-visible');
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                itemsToAnimate.forEach(item => observer.observe(item));
+                if (type === 'speise' && e.target.closest('.item-details')) {
+                    if(!itemButton.classList.contains('expanded')) {
+                        speisenList.querySelectorAll('.item-button.expanded').forEach(btn => btn.classList.remove('expanded'));
+                    }
+                    itemButton.classList.toggle('expanded');
+                }
+
+                const optionButton = e.target.closest('.option-button');
+                if (optionButton) {
+                    optionButton.classList.toggle('selected');
+                }
             }
+
+            function setupScrollAnimations(container) { /* ... */ }
+            function loadOrderForEditing() { /* ... */ }
+            function saveOrderToHistory(payload) { /* ... */ }
+            function renderHistory() { /* ... */ }
+            function loadFromHistory(index) { /* ... */ }
+
+            cartList.addEventListener('click', e => {
+                if (e.target.classList.contains('cart-item-remove')) {
+                    if (e.target.dataset.drink) {
+                        selectedDrink = null;
+                        getraenkeList.querySelectorAll('.item-button.selected').forEach(btn => btn.classList.remove('selected'));
+                    } else {
+                        const index = parseInt(e.target.dataset.cartIndex, 10);
+                        cart.splice(index, 1);
+                    }
+                    renderCart();
+                }
+            });
+            historyList.addEventListener('click', (e) => {
+                const historyItem = e.target.closest('.history-item');
+                if (historyItem) loadFromHistory(historyItem.dataset.historyIndex);
+            });
 
             orderForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const creator = creatorNameInput.value.trim();
-                if (!creator || !selection.storeItemId) {
+                if (!creator || cart.length === 0) {
                     formError.style.display = 'block';
                     return;
                 }
                 formError.style.display = 'none';
                 const orderPayload = {
                     creator: creator,
-                    store_item: { id: selection.storeItemId, variants: Array.from(selection.variants), dips: Array.from(selection.dips) }
+                    store_items: cart,
                 };
-                if (selection.drinkName) {
-                    orderPayload.drink = { name: selection.drinkName };
+                if (selectedDrink) orderPayload.drink = selectedDrink;
+                
+                let url = `http://localhost:8080/api/lists/${listId}/orders`;
+                let method = 'POST';
+                if (orderIdToEdit) {
+                    url = `http://localhost:8080/api/lists/${listId}/orders/${orderIdToEdit}`;
+                    method = 'PUT';
+                    const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
+                    orderPayload.editKey = myOrderKeys[orderIdToEdit];
                 }
-                fetch(`/api/lists/${listId}/orders`, {
-                    method: 'POST',
+                fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderPayload)
                 })
-                .then(response => { if (!response.ok) throw new Error('Bestellung fehlgeschlagen'); return response.json(); })
-                .then(() => {
+                .then(response => { if (!response.ok) throw new Error('Aktion fehlgeschlagen'); return response.json(); })
+                .then(data => {
+                    if (method === 'POST') {
+                        saveOrderToHistory(orderPayload);
+                        let myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
+                        myOrderKeys[data.id] = data.editKey;
+                        localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
+                    }
                     window.location.href = `checkout.html?id=${listId}`;
                 })
-                .catch(error => alert('Fehler beim Bestellen: ' + error.message));
+                .catch(error => alert('Fehler: ' + error.message));
             });
-
+            
+            loadAndCheckDeadline();
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    data.categories?.forEach(cat => cat.items?.forEach(item => { item.type = 'speise'; allSpeisen.push(item); }));
+                    data.drinks?.forEach(drink => { drink.type = 'getraenk'; allGetraenke.push(drink); });
+                    allSpeisen.forEach(item => itemDataMap.set(item.id, item));
+                    allGetraenke.forEach(item => itemDataMap.set(item.name, item));
+                    renderItems();
+                    renderHistory();
+                    if (orderIdToEdit) {
+                        loadOrderForEditing();
+                    }
+                });
             setupSortDropdowns();
+            speisenList.addEventListener('click', handleSelection);
+            getraenkeList.addEventListener('click', handleSelection);
         });
     </script>
 </body>

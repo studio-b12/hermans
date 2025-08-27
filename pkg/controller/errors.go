@@ -10,6 +10,7 @@ const (
 	ErrInvalidStoreItem = elk.ErrorCode("controller:invalid-store-item")
 	ErrInvalidVariants  = elk.ErrorCode("controller:invalid-variants")
 	ErrInvalidDips      = elk.ErrorCode("controller:invalid-dips")
+	ErrInvalidEditKey   = elk.ErrorCode("controller:invalid-edit-key")
 )
 
 type ListError []string

@@ -10,5 +10,11 @@ type Database interface {
 	GetOrderList(orderListId string) (*model.OrderList, error)
 	GetOrders(orderListId string) ([]*model.Order, error)
 	DeleteOrderList(orderListId string) error
-	DeleteOrder(orderId string) error
+	GetOrder(orderListId, orderId string) (*model.Order, error)
+	UpdateOrder(orderListId string, order *model.Order) error
+	DeleteOrder(orderListId, orderId string) error
+	ClearAllData() error //debug
+	//Feedback\\
+	CreateFeedback(feedback *model.Feedback) error
+	GetAllFeedback() ([]*model.Feedback, error)
 }

@@ -25,7 +25,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/k0kubun/pp/v3 v3.5.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect

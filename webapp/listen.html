@@ -152,7 +152,7 @@
                 const editKey = myOrderKeys[orderId];
                 if (!editKey) { alert("Fehler: Kein Schlüssel für diese Bestellung gefunden."); return; }
                 if (confirm("Möchtest du diese Bestellung wirklich löschen?")) {
-                    fetch(`http://localhost:8080/api/lists/${listId}/orders/${orderId}`, {
+                    fetch(`/api/lists/${listId}/orders/${orderId}`, {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ editKey: editKey })
@@ -231,8 +231,8 @@
             function loadAndRenderList() {
                 if (!listId) return;
                 const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                const listUrl = `http://localhost:8080/api/lists/${listId}`;
-                const itemsUrl = `http://localhost:8080/api/items`;
+                const listUrl = `/api/lists/${listId}`;
+                const itemsUrl = `/api/items`;
                 Promise.all([fetch(listUrl).then(res => res.json()), fetch(itemsUrl).then(res => res.json())])
                 .then(([listData, itemsData]) => {
                     currentListData = listData;

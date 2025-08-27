@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const message = document.getElementById('feedbackMessage').value;
         const page = window.location.pathname;
 
-        fetch('http://localhost:8080/api/feedback', {
+        fetch('/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type, message, page })

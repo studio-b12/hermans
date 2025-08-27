@@ -1,6 +1,8 @@
 package api
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,11 +15,9 @@ type API struct {
 }
 
 func New(ctl Controller, addr string) *API {
-	// Erstelle einen Mux NUR für die API-Routen
 	apiMux := http.NewServeMux()
 	t := API{ctl: ctl}
 
-	// Registriere alle API-Routen beim apiMux
 	apiMux.HandleFunc("GET /items", t.handleGetStoreItems)
 	apiMux.HandleFunc("POST /lists", t.handleCreateOrderList)
 	apiMux.HandleFunc("GET /lists/{id}", t.handleGetOrderList)
@@ -28,14 +28,10 @@ func New(ctl Controller, addr string) *API {
 	apiMux.HandleFunc("DELETE /lists/{listId}/orders/{orderId}", t.handleDeleteOrder)
 	apiMux.HandleFunc("GET /dev/clearall", t.handleClearAll)
 
-	// Erstelle einen Haupt-Mux, der den Traffic aufteilt
 	mainMux := http.NewServeMux()
-	// Alles, was an /api/ geht, wird vom apiMux behandelt
 	mainMux.Handle("/api/", http.StripPrefix("/api", apiMux))
-	// Alles andere wird als statische Datei aus dem "webapp"-Ordner serviert
 	mainMux.Handle("/", http.FileServer(http.Dir("webapp")))
 
-	// Erstelle einen finalen Handler, der CORS für alle Anfragen setzt
 	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -60,7 +56,6 @@ func (t *API) handleClearAll(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Alle Daten wurden gelöscht."))
 }
 
@@ -74,13 +69,12 @@ func (t *API) handleGetStoreItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *API) handleCreateOrderList(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Deadline *time.Time `json:"deadline"`
-	}
-	// Dein readJsonBody aus util.go wird hier aufgerufen
-	_, _ = readJsonBody[struct {
+	payload, err := readJsonBody[struct {
 		Deadline *time.Time `json:"deadline"`
 	}](r)
+	if err != nil && err != io.EOF {
+		slog.Warn("failed reading optional deadline body", "err", err)
+	}
 
 	list, err := t.ctl.CreateOrderList(payload.Deadline)
 	if err != nil {
@@ -92,22 +86,16 @@ func (t *API) handleCreateOrderList(w http.ResponseWriter, r *http.Request) {
 
 func (t *API) handleGetOrderList(w http.ResponseWriter, r *http.Request) {
 	orderListId := r.PathValue("id")
-
-	// Hole die OrderList selbst
 	list, err := t.ctl.GetOrderList(orderListId)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
-	// Hole die Orders zur Liste
 	orders, err := t.ctl.GetOrders(orderListId)
 	if err != nil {
 		respondErr(w, err)
 		return
 	}
-
-	// Kombiniere die Daten
 	respondJson(w, http.StatusOK, map[string]interface{}{
 		"id":       list.Id,
 		"created":  list.Created,
@@ -152,6 +140,7 @@ func (t *API) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
+
 	payload, err := readJsonBody[struct {
 		model.Order
 		EditKey string `json:"editKey"`
@@ -160,6 +149,7 @@ func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
+
 	updatedOrder, err := t.ctl.UpdateOrder(listId, orderId, payload.EditKey, &payload.Order)
 	if err != nil {
 		respondErr(w, err)
@@ -171,6 +161,7 @@ func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
+
 	payload, err := readJsonBody[struct {
 		EditKey string `json:"editKey"`
 	}](r)
@@ -178,6 +169,7 @@ func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
+
 	if err := t.ctl.DeleteOrder(listId, orderId, payload.EditKey); err != nil {
 		respondErr(w, err)
 		return

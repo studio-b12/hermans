@@ -171,7 +171,7 @@ func (t *Controller) CreateOrder(orderListId string, order *model.Order) (*model
 	return order, nil
 }
 
-func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
+func (t *Controller) GetOrders(orderListId string) ([]*model.Order, error) {
 	orderList, err := t.db.GetOrderList(orderListId)
 	if err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (t *Controller) GetOrders(orderListId string) (*model.OrderList, error) {
 		return nil, err
 	}
 
-	return orderList, nil
+	return t.db.GetOrders(orderListId)
 }
 
 func (t *Controller) DeleteOrderList(orderListId string) error {

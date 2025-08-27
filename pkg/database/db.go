@@ -148,16 +148,14 @@ func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 	}
 
 	query := `
-		SELECT 
-    	oi.OrderId, 
-    	oi.StoreItemId, 
-    	GROUP_CONCAT(DISTINCT StoreItemVariant.Variant) as variants, 
-    	GROUP_CONCAT(DISTINCT StoreItemDip.Dip) as dips
-		FROM OrderItems oi
-		LEFT JOIN StoreItemVariant ON StoreItemVariant.OrderId = oi.OrderId AND StoreItemVariant.StoreItemId = oi.StoreItemId
-		LEFT JOIN StoreItemDip ON StoreItemDip.OrderId = oi.OrderId AND StoreItemDip.StoreItemId = oi.StoreItemId
-		WHERE oi.OrderId IN (?` + strings.Repeat(",?", len(orderIDs)-1) + `)
-		GROUP BY oi.OrderId, oi.StoreItemId`
+        SELECT oi.OrderId, oi.StoreItemId, 
+               GROUP_CONCAT(DISTINCT sv.Variant) as variants, 
+               GROUP_CONCAT(DISTINCT sd.Dip) as dips
+        FROM OrderItems oi
+        LEFT JOIN StoreItemVariant sv ON sv.OrderId = oi.OrderId AND sv.StoreItemId = oi.StoreItemId
+        LEFT JOIN StoreItemDip sd ON sd.OrderId = oi.OrderId AND sd.StoreItemId = oi.StoreItemId
+        WHERE oi.OrderId IN (?` + strings.Repeat(",?", len(orderIDs)-1) + `)
+        GROUP BY oi.OrderId, oi.StoreItemId`
 
 	itemRows, err := t.conn.Query(query, orderIDs...)
 	if err != nil {
@@ -194,36 +192,40 @@ func (t *Database) GetOrders(orderListId string) ([]*model.Order, error) {
 }
 
 func (t *Database) GetOrder(orderListId, orderId string) (*model.Order, error) {
-	var order model.Order
-	var drinkName sql.NullString
-	var drinkSize sql.NullInt64
+	var (
+		order     model.Order
+		editKey   sql.NullString
+		drinkName sql.NullString
+		drinkSize sql.NullInt64
+	)
 
 	err := t.conn.QueryRow(`
 		SELECT o.Id, o.Created, o.Creator, o.EditKey, d.Name, d.Size 
 		FROM "Order" o 
 		LEFT JOIN "Drink" d ON d.Id = o.DrinkId 
 		WHERE o.OrderListId = ? AND o.Id = ?`, orderListId, orderId).
-		Scan(&order.Id, &order.Created, &order.Creator, &order.EditKey, &drinkName, &drinkSize)
+		Scan(&order.Id, &order.Created, &order.Creator, &editKey, &drinkName, &drinkSize)
 
 	if err != nil {
 		return nil, wrapErr(err)
 	}
 
+	if editKey.Valid {
+		order.EditKey = editKey.String
+	}
 	if drinkName.Valid {
 		order.Drink = &model.Drink{Name: drinkName.String, Size: model.DrinkSize(drinkSize.Int64)}
 	}
 
 	rows, err := t.conn.Query(`
-		SELECT 
-    	oi.StoreItemId, 
-	    GROUP_CONCAT(DISTINCT StoreItemVariant.Variant) as variants, 
-	    GROUP_CONCAT(DISTINCT StoreItemDip.Dip) as dips
+		SELECT oi.StoreItemId, 
+			   GROUP_CONCAT(DISTINCT sv.Variant) as variants, 
+			   GROUP_CONCAT(DISTINCT sd.Dip) as dips
 		FROM OrderItems oi
-		LEFT JOIN StoreItemVariant ON StoreItemVariant.OrderId = oi.OrderId AND StoreItemVariant.StoreItemId = oi.StoreItemId
-		LEFT JOIN StoreItemDip ON StoreItemDip.OrderId = oi.OrderId AND StoreItemDip.StoreItemId = oi.StoreItemId
+		LEFT JOIN StoreItemVariant sv ON sv.OrderId = oi.OrderId AND sv.StoreItemId = oi.StoreItemId
+		LEFT JOIN StoreItemDip sd ON sd.OrderId = oi.OrderId AND sd.StoreItemId = oi.StoreItemId
 		WHERE oi.OrderId = ?
 		GROUP BY oi.StoreItemId`, orderId)
-
 	if err != nil {
 		return nil, wrapErr(err)
 	}
@@ -256,7 +258,6 @@ func (t *Database) UpdateOrder(orderListId string, order *model.Order) error {
 	}
 	defer tx.Rollback()
 
-	// Alte Order-Items und Varianten/Dips löschen
 	if _, err = tx.Exec(`DELETE FROM "OrderItems" WHERE "OrderId" = ?`, order.Id); err != nil {
 		return wrapErr(err)
 	}
@@ -315,14 +316,7 @@ func (t *Database) DeleteOrderList(orderListId string) error {
 }
 
 func (t *Database) DeleteOrder(orderListId, orderId string) error {
-	res, err := t.conn.Exec(`DELETE FROM "Order" WHERE "Id" = ? AND "OrderListId" = ?`, orderId, orderListId)
-	if err != nil {
-		return wrapErr(err)
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err == nil && rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
+	_, err := t.conn.Exec(`DELETE FROM "Order" WHERE "Id" = ? AND "OrderListId" = ?`, orderId, orderListId)
 	return wrapErr(err)
 }
 

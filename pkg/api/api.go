@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/zekrotja/hermans/pkg/model"
 )
@@ -64,9 +63,7 @@ func (t *API) handleGetStoreItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *API) handleCreateOrderList(w http.ResponseWriter, r *http.Request) {
-	payload, err := readJsonBody[struct {
-		Deadline *time.Time `json:"deadline"`
-	}](r)
+	payload, err := readJsonBody[model.CreateListPayload](r)
 	if err != nil && err.Error() != "EOF" {
 		respondErr(w, err)
 		return
@@ -91,12 +88,13 @@ func (t *API) handleGetOrderList(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-	respondJson(w, http.StatusOK, map[string]interface{}{
-		"id":       list.Id,
-		"created":  list.Created,
-		"deadline": list.Deadline,
-		"orders":   orders,
-	})
+	response := model.GetOrderListResponse{
+		Id:       list.Id,
+		Created:  list.Created,
+		Deadline: list.Deadline,
+		Orders:   orders,
+	}
+	respondJson(w, http.StatusOK, response)
 }
 
 func (t *API) handleGetOrder(w http.ResponseWriter, r *http.Request) {
@@ -122,23 +120,21 @@ func (t *API) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, err)
 		return
 	}
-	respondJson(w, http.StatusCreated, map[string]interface{}{
-		"id":          newOrder.Id,
-		"created":     newOrder.Created,
-		"creator":     newOrder.Creator,
-		"store_items": newOrder.StoreItems,
-		"drink":       newOrder.Drink,
-		"editKey":     newOrder.EditKey,
-	})
+	response := model.CreateOrderResponse{
+		Id:         newOrder.Id,
+		Created:    newOrder.Created,
+		Creator:    newOrder.Creator,
+		StoreItems: newOrder.StoreItems,
+		Drink:      newOrder.Drink,
+		EditKey:    newOrder.EditKey,
+	}
+	respondJson(w, http.StatusCreated, response)
 }
 
 func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
-	payload, err := readJsonBody[struct {
-		model.Order
-		EditKey string `json:"editKey"`
-	}](r)
+	payload, err := readJsonBody[model.UpdateOrderPayload](r)
 	if err != nil {
 		respondErr(w, err)
 		return
@@ -154,9 +150,7 @@ func (t *API) handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
 func (t *API) handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 	listId := r.PathValue("listId")
 	orderId := r.PathValue("orderId")
-	payload, err := readJsonBody[struct {
-		EditKey string `json:"editKey"`
-	}](r)
+	payload, err := readJsonBody[model.DeleteOrderPayload](r)
 	if err != nil {
 		respondErr(w, err)
 		return

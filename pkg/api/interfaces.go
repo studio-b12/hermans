@@ -18,4 +18,6 @@ type Controller interface {
 	GetOrders(orderListId string) ([]*model.Order, error)
 	GetOrder(orderListId, orderId string) (*model.Order, error)
 	ClearAllData() error
+	// Feedback \\
+	CreateFeedback(feedback *model.Feedback) (*model.Feedback, error)
 }

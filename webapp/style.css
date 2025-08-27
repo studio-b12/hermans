@@ -10,11 +10,8 @@
     --accent-green: #16a34a;
     --accent-blue: #007aff;
 }
-
-html {
-    scroll-behavior: smooth; /* EXTRA: Sanftes Scrollen für die ganze Seite */
-}
-
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--background-light);
@@ -24,69 +21,19 @@ body {
 }
 
 /* --- Layout-Klassen für ganze Seiten --- */
-body.full-height-body, .liste-body, .listen-body {
-    padding: 20px;
-    box-sizing: border-box;
-}
-body.full-height-body {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    min-height: 100vh;
-}
-
-.container {
-    max-width: 1400px;
-    width: 90%;
-    margin: 0 auto;
-}
+body.full-height-body, .liste-body, .listen-body { padding: 20px; box-sizing: border-box; }
+body.full-height-body { display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; }
+.container { max-width: 1400px; width: 90%; margin: 0 auto; }
 
 /* --- Allgemeine Komponenten --- */
-.btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1em;
-    font-weight: 600;
-    padding: 15px 30px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-block;
-    width: 100%;
-    box-sizing: border-box;
-}
-.btn:hover {
-    background-color: var(--primary-color-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.btn:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-.btn-copy {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 0.8em;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.btn-copy:hover {
-    background-color: var(--primary-color-dark);
-}
+.btn { background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; padding: 15px 30px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; width: 100%; box-sizing: border-box; }
+.btn:hover { background-color: var(--primary-color-dark); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-copy { background-color: var(--primary-color); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s; }
+.btn-copy:hover { background-color: var(--primary-color-dark); }
 
 /* --- Stile für Landing Page (index.html) --- */
-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color);
-}
+header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
 header .container { display: flex; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.5em; font-weight: 700; color: var(--text-dark); text-decoration: none; }
 .logo span { color: var(--primary-color); }
@@ -116,39 +63,47 @@ footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--bor
 .menu-wrapper { display: grid; grid-template-columns: 1fr; gap: 30px; }
 @media (min-width: 960px) { .menu-wrapper { grid-template-columns: 1fr 1fr; } }
 .category-card { background-color: var(--card-background); border-radius: 16px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: grid; grid-template-rows: auto auto 1fr; max-height: 85vh; }
+.category-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+.category-title { font-size: 1.5em; font-weight: 700; color: var(--text-dark); margin: 0; }
 .controls-wrapper { display: flex; gap: 10px; margin-bottom: 20px; }
-.search-input { flex-grow: 1; padding: 10px 15px; font-size: 1em; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
-.items-list { overflow-y: auto; padding-right: 15px; margin-right: -15px; min-height: 0; }
-.item-button { background: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; width: 100%; text-align: left; cursor: pointer; transition: all 0.2s ease-in-out; margin-bottom: 15px; }
+.search-input { flex-grow: 1; padding: 10px 15px; font-size: 1em; border: 1px solid var(--border-color); border-radius: 8px; }
+.items-list { overflow-y: auto; overflow-x: hidden; padding-right: 5px; min-height: 0; }
+.item-button { background: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; width: 100%; text-align: left; transition: all 0.2s ease-in-out; margin-bottom: 15px; }
+.item-details { cursor: pointer; }
 .item-button:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-.item-button.in-cart,
-.item-button.selected {
-    border-color: var(--primary-color);
-    background-color: #fffbeb;
-    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
-}
+.item-button.expanded, .item-button.selected { border-color: var(--primary-color); background-color: #fffbeb; }
 .item-details h4 { margin: 0 0 4px 0; font-size: 1.1em; }
 .item-details p { margin: 5px 0 0; font-size: 0.9em; color: var(--text-light); }
 .item-details .price { font-size: 1.1em; font-weight: 600; color: var(--primary-color); margin-top: 8px; }
-.sort-dropdown-wrapper { position: relative; flex-shrink: 0; }
-.sort-button { background: var(--card-background); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 1em; white-space: nowrap; }
-.sort-dropdown-menu { display: none; position: absolute; top: 110%; right: 0; background: var(--card-background); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); z-index: 20; width: 200px; overflow: hidden; }
-.sort-dropdown-menu.active { display: block; }
-.sort-dropdown-menu a { display: block; padding: 10px 15px; text-decoration: none; color: var(--text-dark); }
-.sort-dropdown-menu a:hover { background-color: var(--background-light); }
-.sort-dropdown-menu a.selected { font-weight: 600; background-color: #fffbeb; color: var(--primary-color); }
+.item-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, margin-top 0.3s ease-in-out, opacity 0.3s; opacity: 0; }
+.item-button.expanded .item-options { max-height: 600px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); opacity: 1; }
+.options-group { margin-bottom: 15px; }
+.options-group h5 { margin: 0 0 10px; }
+.options-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.option-button { background: #f9fafb; border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+.option-button.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+.btn-add-to-cart { width: 100%; background-color: #16a34a; color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+.btn-add-to-cart:hover { background-color: #15803d; }
+
+/* --- iOS LIQUID DESIGN FÜR SEITENLEISTE --- */
 .liquid-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); padding: 25px; position: sticky; top: 20px; }
 .liquid-header { font-size: 1.2em; font-weight: 600; color: var(--text-dark); padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 15px; }
-#cart-placeholder, #history-placeholder { color: var(--text-light); text-align: center; padding: 20px 0; }
+.empty-state { text-align: center; padding: 20px 0; color: var(--text-light); }
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 10px; opacity: 0.5; }
 .cart-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
-.cart-item-icon { color: var(--accent-blue); flex-shrink: 0; }
 .cart-item-info { flex-grow: 1; font-weight: 500; }
+.cart-item-info .extras { font-size: 0.85em; color: var(--text-light); }
 .cart-item-remove { background: #e5e7eb; color: var(--text-light); border:none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
 .cart-item-remove:hover { background: #ef4444; color: white; }
 .history-item { cursor: pointer; padding: 12px; border-radius: 10px; transition: background-color 0.2s; }
 .history-item:hover { background-color: rgba(0,0,0,0.03); }
 .history-item .food { font-weight: 500; }
 .history-item .drink { font-size: 0.9em; color: var(--text-light); }
+.history-item-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; font-size: 0.85em; color: var(--text-light); padding-left: 15px; }
+.history-item:hover .history-item-details { max-height: 100px; margin-top: 5px; }
+.history-item-details ul { margin: 0; padding-left: 15px; }
+
+/* --- Abschlussbereich --- */
 .submission-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0 -5px 25px rgba(0,0,0,0.1); z-index: 100; padding: 15px 25px 20px 25px; margin-top: 30px; border-radius: 16px; }
 .main-content .submission-card { position: sticky; bottom: 0; }
 .submission-card h3 { margin-top: 0; }
@@ -159,6 +114,7 @@ footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--bor
 .deadline-display.expired { color: #b91c1c; border-color: #fca5a5; background-color: #fee2e2; }
 
 /* --- Stile für listen.html --- */
+.listen-body { padding: 20px; box-sizing: border-box; }
 .list-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 16px; padding: 20px 25px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); z-index: 10; position: sticky; top: 20px; }
 .list-header h2 { margin-top: 0; }
 .list-header p { color: var(--text-light); }
@@ -194,6 +150,19 @@ footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--bor
 .btn-edit:hover { background-color: #005ecb; }
 .delete-btn { background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.9em; cursor: pointer; }
 .delete-btn:hover { background-color: #dc2626; }
+.stats-button { background-color: var(--background-light); color: var(--text-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.stats-button:hover { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+.modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+.modal-backdrop.is-visible { opacity: 1; visibility: visible; }
+.modal-content { background-color: var(--card-background); border-radius: 16px; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s; }
+.modal-backdrop.is-visible .modal-content { transform: scale(1); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+.modal-header h3 { margin: 0; font-size: 1.5em; }
+.modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-light); }
+.stat-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.stat-item:last-child { border-bottom: none; }
+.stat-item .label { font-weight: 500; }
+.stat-item .value { font-weight: 700; color: var(--primary-color); }
 
 /* --- Stile für checkout.html --- */
 .checkout-card { background-color: var(--card-background); border-radius: 16px; padding: 30px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 450px; width: 100%; margin-top: 5vh; display: flex; flex-direction: column; align-items: center; }
@@ -213,81 +182,51 @@ footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--bor
 @keyframes stroke { 100% { stroke-dashoffset: 0; } }
 @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
 @keyframes circle-fill { from { fill: transparent; } to { fill: var(--primary-color); } }
+.feedback-btn{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background-color:var(--primary-color);color:white;border:none;font-size:24px;font-weight:bold;box-shadow:0 4px 10px rgba(0,0,0,0.2);cursor:pointer;z-index:999;}.feedback-type{display:flex;gap:20px;margin-bottom:15px;}#feedbackMessage{width:100%;min-height:120px;padding:10px;border:1px solid var(--border-color);border-radius:8px;resize:vertical;margin-bottom:20px;box-sizing:border-box;}
 
-/* --- NEU: Stile für Statistik-Modal --- */
-.stats-button {
-    background-color: var(--background-light);
-    color: var(--text-dark);
+/* --- Stile für Sortier-Dropdown (Korrektur) --- */
+.sort-dropdown-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+.sort-button {
+    background: var(--card-background);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 8px 15px;
-    font-weight: 500;
+    padding: 10px 15px;
     cursor: pointer;
-    transition: all 0.2s;
-}
-.stats-button:hover {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
+    gap: 8px;
+    font-size: 1em;
+    white-space: nowrap;
 }
-.modal-backdrop.is-visible {
-    opacity: 1;
-    visibility: visible;
+.sort-dropdown-menu {
+    display: none; /* Standardmäßig versteckt */
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+    z-index: 20;
+    width: 200px;
+    overflow: hidden;
 }
-
-.modal-content {
-    background-color: var(--card-background);
-    border-radius: 16px;
-    padding: 30px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    transform: scale(0.95);
-    transition: transform 0.3s;
+.sort-dropdown-menu.active {
+    display: block; /* Nur sichtbar, wenn .active Klasse gesetzt ist */
 }
-.modal-backdrop.is-visible .modal-content {
-    transform: scale(1);
+.sort-dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--text-dark);
 }
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+.sort-dropdown-menu a:hover {
+    background-color: var(--background-light);
 }
-.modal-header h3 { margin: 0; font-size: 1.5em; }
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-    color: var(--text-light);
+.sort-dropdown-menu a.selected {
+    font-weight: 600;
+    background-color: #fffbeb;
+    color: var(--primary-color);
 }
-
-.stat-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-color);
-}
-.stat-item:last-child { border-bottom: none; }
-.stat-item .label { font-weight: 500; }
-.stat-item .value { font-weight: 700; color: var(--primary-color); }

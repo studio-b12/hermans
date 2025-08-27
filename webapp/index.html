@@ -6,6 +6,7 @@
     <title>HERMAN's Sammelbestellung</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="feedback.js"></script>
 </head>
 <body>
 
@@ -63,7 +64,24 @@
             </div>
         </section>
     </main>
-
+    <button class="feedback-btn" id="feedbackBtn" title="Feedback geben">?</button>
+<div class="modal-backdrop" id="feedbackModalBackdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Feedback geben</h3>
+            <button class="modal-close" id="feedbackModalCloseBtn">&times;</button>
+        </div>
+        <form id="feedbackForm">
+            <div class="feedback-type">
+                <label><input type="radio" name="feedbackType" value="Gut" checked> Gut</label>
+                <label><input type="radio" name="feedbackType" value="Schlecht"> Schlecht</label>
+                <label><input type="radio" name="feedbackType" value="Idee"> Idee</label>
+            </div>
+            <textarea id="feedbackMessage" placeholder="Dein Feedback..." required></textarea>
+            <button type="submit" class="btn">Senden</button>
+        </form>
+    </div>
+</div>
     <footer>
         <div class="container">
             <p>&copy; 2025 HERMAN's Liste</p>

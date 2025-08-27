@@ -336,3 +336,30 @@ func (t *Database) ClearAllData() error {
 
 	return wrapErr(tx.Commit())
 }
+
+//Feedback\\
+
+func (t *Database) CreateFeedback(feedback *model.Feedback) error {
+	_, err := t.conn.Exec(
+		`INSERT INTO "Feedback" ("Id", "Timestamp", "Type", "Message", "Page") VALUES (?, ?, ?, ?, ?);`,
+		feedback.Id, feedback.Timestamp, feedback.Type, feedback.Message, feedback.Page)
+	return wrapErr(err)
+}
+
+func (t *Database) GetAllFeedback() ([]*model.Feedback, error) {
+	rows, err := t.conn.Query(`SELECT "Id", "Timestamp", "Type", "Message", "Page" FROM "Feedback" ORDER BY "Timestamp" DESC`)
+	if err != nil {
+		return nil, wrapErr(err)
+	}
+	defer rows.Close()
+
+	var feedbacks []*model.Feedback
+	for rows.Next() {
+		var fb model.Feedback
+		if err := rows.Scan(&fb.Id, &fb.Timestamp, &fb.Type, &fb.Message, &fb.Page); err != nil {
+			return nil, wrapErr(err)
+		}
+		feedbacks = append(feedbacks, &fb)
+	}
+	return feedbacks, nil
+}

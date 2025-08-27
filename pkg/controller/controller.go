@@ -246,3 +246,14 @@ func (t *Controller) getStoreItem(id string) (si *scraper.StoreItem, ok bool, er
 
 	return nil, false, nil
 }
+
+//Feedback\\
+
+func (t *Controller) CreateFeedback(feedback *model.Feedback) (*model.Feedback, error) {
+	feedback.Id = uuid.New().String()
+	feedback.Timestamp = time.Now()
+	if err := t.validator.Struct(feedback); err != nil {
+		return nil, err
+	}
+	return feedback, t.db.CreateFeedback(feedback)
+}

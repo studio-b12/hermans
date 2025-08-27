@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bestellung erfolgreich!</title>
     <link rel="stylesheet" href="style.css">
+    <script src="feedback.js"></script>
     <style>
         body.full-height-body {
     display: flex;
@@ -168,6 +169,25 @@
             </div>
         </div>
     </div>
+
+    <button class="feedback-btn" id="feedbackBtn" title="Feedback geben">?</button>
+<div class="modal-backdrop" id="feedbackModalBackdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Feedback geben</h3>
+            <button class="modal-close" id="feedbackModalCloseBtn">&times;</button>
+        </div>
+        <form id="feedbackForm">
+            <div class="feedback-type">
+                <label><input type="radio" name="feedbackType" value="Gut" checked> Gut</label>
+                <label><input type="radio" name="feedbackType" value="Schlecht"> Schlecht</label>
+                <label><input type="radio" name="feedbackType" value="Idee"> Idee</label>
+            </div>
+            <textarea id="feedbackMessage" placeholder="Dein Feedback..." required></textarea>
+            <button type="submit" class="btn">Senden</button>
+        </form>
+    </div>
+</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

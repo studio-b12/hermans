@@ -114,7 +114,7 @@
                 return response.json();
             })
             .then(data => {
-                const newListId = data.id; 
+                const newListId = data.id;
                 window.location.href = `liste.html?id=${newListId}`;
             })
             .catch(error => {

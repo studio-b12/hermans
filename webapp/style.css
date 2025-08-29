@@ -12,13 +12,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--background-light);
-    color: var(--text-dark);
-    margin: 0;
-    line-height: 1.6;
-}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var--background-light; color: var(--text-dark); margin: 0; line-height: 1.6; }
 
 /* --- Layout-Klassen für ganze Seiten --- */
 body.full-height-body, .liste-body, .listen-body { padding: 20px; box-sizing: border-box; }

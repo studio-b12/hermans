@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bestellübersicht</title>
     <link rel="stylesheet" href="style.css">
+    <script src="feedback.js"></script>
 </head>
 <body class="listen-body">
     <div class="container">
@@ -52,7 +53,6 @@
             <div id="statsModalBody"></div>
         </div>
     </div>
-
     <button class="feedback-btn" id="feedbackBtn" title="Feedback geben">
     <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAElklEQVR4nO2Za6gVVRTHf14jr1q+SrNbJnFFiupa9ACViOJGL0jKpE9aUYo9LCusKNMksIjKikp6kJR+ySA1isgESyjU3tHrQ6WVzzItblne6k6sy39gMedxZ8+cM6fg/GHgnNl7r7Vmz15r/dcaaKKJJopAP2ACcC3wLLAe+A7YC/yta6/urdec2UCH1jYcZwCPA9uAKOO1TTJOL9p428FLgfcSBn0PLAduADqBdmA40B84SL/bNWZzVgA/JGRsBi4p4i2dJmWx4j3AQ7qfRXk/rTUZPzu5m4BT62B/747eD/wlRTu1q6011DEQuBHYJR2ma7F01wQjgbck3Jz2YWAw9cMhwCPSFSk4mA25MAb4SgJ3AGdSHM7Sm49kw9FZBR0BfCNBnwBtFI824FPZ8DUwKst53SQB7yviNAojgA9ly8ZQv3xUC7cAo3MYMQD4CHiZfDgS2CqbzH9S4WygB+hWaMyDy11IPbkGybdbtpn/VEWLe40LyY+17kEeq4G8RZL1gWytiKkuS5uf5MFY4B/tYqSElzfvDHJ0yBhARcT5Yg75cY9krdAORjpqeTFXstZVyxl2/rqAQ3Mqa1GgMIXnANfptx21vBgK/C5by6aE2VIWEmHa5MSWKC/Ujs8Sd4qUh4xPDQP266jdAcwEpgHnAZOAk4DDA/SukXyTU4LnNWgPlAZXpKDod7n5y/uYaw9pD5UG8RteVm4wjlYTA8L0nwnGuhJ4CngQuC0RMIwpLACWAM9o7uduvQWDcSl1T3bJugS7NRhCAyaKg8XHyI5IWpzrqPtnAQ+BknQkplyCeHctGxPoJxu11gLFZSnWzHJh+VU5cAgGaK3ZXIL9GswS61udj1k0ubnK3KVu3qKMBVmrZPxRbnC7Bo3XZMV91c6u0KU5V+bQM7ra0YqTljlSVixIQUfW1iA5TpYM6xuU4GkN3pRDwQbJuFj/rRh6QYzVcgmKZpEiV1ZcLxnPlRu8xjlf1hK1W7X2MPW4fnXh1Y7uFOAUVyJkxSuScXW5wVEy4oCKmVBcJOHWhHvbPYAxhXfc/5fkpFFgyI0x3LGEirXS61JwJ+FYksjUO8WmY+41xzl6FMgiPG7R2jeogk7XrxpCGD52YXVZhfJ4rNssu17McHy3J/ywT4d9IlCJUY4vlbH7wgzVFfcG6ljs6FCf+adDftKT0qiiMEk+HEIume+I3Hgaj6Ncn/iBkIXmnKsdGTyWxmGk621tyMAFe9uicW/LduMEiscYR/Wt23hYVkFD1Hs1Qb8B0ykOncCPjubn6a/1YqBjtpEqvXpiqBhyj8sXmd9EOcysRp1rAMsR85TDIkXOu/WhqKZodz2vWqFFVaax5V/cWzeKcyJ1wlVSYtGsXKFjZHOVqLx9mjte1eNgHc8RuneBaMZK91HHP8D51BlvVmjBHOzaM1mub9U+skRcdxyjjHog4Xi24+/KoJ9Ui9snuteAL0RDutRQ26MQas77pN7wcRSMpYk+kh2V24F97iNMSAelIehwHY9b9e1kd6LeiKu//yz6u1ZP8tqsNun/AvNdVt+qxsFClatNNEFl/AslWJwqqgXIDAAAAABJRU5ErkJggg==" alt="Feedback Icon" style="width:24px; height:24px;">
 </button>
@@ -73,297 +73,308 @@
         </form>
     </div>
 </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const listInfoDiv = document.getElementById('listInfo');
-            const ordersContainer = document.getElementById('ordersContainer');
-            const summaryListDiv = document.getElementById('summaryList');
-            const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
-            const copyDrinksBtn = document.getElementById('copyDrinksBtn');
-            const detailsAccordion = document.getElementById('detailsAccordion');
-            const countdownTimer = document.getElementById('countdownTimer');
-            const statsBtn = document.getElementById('statsBtn');
-            const statsModalBody = document.getElementById('statsModalBody');
-            const statsModalBackdrop = document.getElementById('statsModalBackdrop');
-            const statsModalCloseBtn = document.getElementById('statsModalCloseBtn');
-            const params = new URLSearchParams(window.location.search);
-            const listId = params.get('id');
-            
-            let isInitialLoad = true;
-            let drinkSummary = new Map();
-            let countdownInterval;
-            let currentListData = null;
-            let allItemsMap = new Map();
+    document.addEventListener('DOMContentLoaded', () => {
+        const listInfoDiv = document.getElementById('listInfo');
+        const ordersContainer = document.getElementById('ordersContainer');
+        const summaryListDiv = document.getElementById('summaryList');
+        const drinkSummaryListDiv = document.getElementById('drinkSummaryList');
+        const copyDrinksBtn = document.getElementById('copyDrinksBtn');
+        const detailsAccordion = document.getElementById('detailsAccordion');
+        const countdownTimer = document.getElementById('countdownTimer');
+        const statsBtn = document.getElementById('statsBtn');
+        const statsModalBody = document.getElementById('statsModalBody');
+        const statsModalBackdrop = document.getElementById('statsModalBackdrop');
+        const statsModalCloseBtn = document.getElementById('statsModalCloseBtn');
+        const params = new URLSearchParams(window.location.search);
+        const listId = params.get('id');
+        
+        let isInitialLoad = true;
+        let drinkSummary = new Map();
+        let countdownInterval;
+        let currentListData = null;
+        let allItemsMap = new Map();
 
-            function saveCheckedState() {
-                const storageKey = `checkedItems_${listId}`;
-                const checkedCards = document.querySelectorAll('#summaryList .summary-card.is-checked-off');
-                const checkedKeys = Array.from(checkedCards).map(card => card.dataset.key);
-                localStorage.setItem(storageKey, JSON.stringify(checkedKeys));
+        function saveCheckedState() {
+            const storageKey = `checkedItems_${listId}`;
+            const checkedCards = document.querySelectorAll('#summaryList .summary-card.is-checked-off');
+            const checkedKeys = Array.from(checkedCards).map(card => card.dataset.key);
+            localStorage.setItem(storageKey, JSON.stringify(checkedKeys));
+        }
+
+        function applyCheckedState() {
+            const storageKey = `checkedItems_${listId}`;
+            const savedKeys = localStorage.getItem(storageKey);
+            if (savedKeys) {
+                const checkedKeys = new Set(JSON.parse(savedKeys));
+                document.querySelectorAll('#summaryList .summary-card[data-key]').forEach(card => {
+                    if (checkedKeys.has(card.dataset.key)) card.classList.add('is-checked-off');
+                });
             }
+        }
 
-            function applyCheckedState() {
-                const storageKey = `checkedItems_${listId}`;
-                const savedKeys = localStorage.getItem(storageKey);
-                if (savedKeys) {
-                    const checkedKeys = new Set(JSON.parse(savedKeys));
-                    document.querySelectorAll('#summaryList .summary-card[data-key]').forEach(card => {
-                        if (checkedKeys.has(card.dataset.key)) card.classList.add('is-checked-off');
-                    });
-                }
+        summaryListDiv.addEventListener('click', (e) => {
+            const card = e.target.closest('.summary-card');
+            if (card && card.dataset.key) {
+                card.classList.toggle('is-checked-off');
+                saveCheckedState();
             }
+        });
 
-            summaryListDiv.addEventListener('click', (e) => {
-                const card = e.target.closest('.summary-card');
-                if (card && card.dataset.key) {
-                    card.classList.toggle('is-checked-off');
-                    saveCheckedState();
-                }
-            });
-
-            copyDrinksBtn.addEventListener('click', () => {
-                if (drinkSummary.size > 0) {
-                    const drinkLines = [];
-                    drinkSummary.forEach((count, name) => drinkLines.push(`- ${count}x ${name}`));
-                    navigator.clipboard.writeText(drinkLines.join('\n')).then(() => {
-                        copyDrinksBtn.textContent = 'Kopiert!';
-                        setTimeout(() => copyDrinksBtn.textContent = 'Liste kopieren', 2000);
-                    });
-                }
-            });
-
-            function setupScrollAnimations(container) {
-                const itemsToAnimate = container.querySelectorAll('.summary-card:not(.is-visible), .order-card:not(.is-visible)');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach((entry, index) => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.transitionDelay = `${index * 50}ms`;
-                            entry.target.classList.add('is-visible');
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                itemsToAnimate.forEach(item => observer.observe(item));
+        copyDrinksBtn.addEventListener('click', () => {
+            if (drinkSummary.size > 0) {
+                const drinkLines = [];
+                drinkSummary.forEach((count, name) => drinkLines.push(`- ${count}x ${name}`));
+                navigator.clipboard.writeText(drinkLines.join('\n')).then(() => {
+                    copyDrinksBtn.textContent = 'Kopiert!';
+                    setTimeout(() => copyDrinksBtn.textContent = 'Liste kopieren', 2000);
+                });
             }
+        });
 
-            function handleDelete(orderId) {
-                const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                const editKey = myOrderKeys[orderId];
-                if (!editKey) { alert("Fehler: Kein Schlüssel für diese Bestellung gefunden."); return; }
-                if (confirm("Möchtest du diese Bestellung wirklich löschen?")) {
-                    fetch(`/api/lists/${listId}/orders/${orderId}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ editKey: editKey })
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error("Löschen fehlgeschlagen.");
-                        delete myOrderKeys[orderId];
-                        localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
-                        loadAndRenderList();
-                    })
-                    .catch(err => alert(err.message));
-                }
-            }
-
-            ordersContainer.addEventListener('click', e => {
-                if (e.target.classList.contains('delete-btn')) handleDelete(e.target.dataset.orderId);
-                if (e.target.classList.contains('btn-edit')) window.location.href = `liste.html?id=${listId}&edit=${e.target.dataset.orderId}`;
-            });
-            
-            function startCountdown(deadlineString) {
-                if (!deadlineString) return;
-                const deadline = new Date(deadlineString).getTime();
-                countdownTimer.style.display = 'block';
-                if (countdownInterval) clearInterval(countdownInterval);
-                const updateTimer = () => {
-                    const now = new Date().getTime();
-                    const distance = deadline - now;
-                    if (distance < 0) {
-                        clearInterval(countdownInterval);
-                        countdownTimer.innerHTML = '<span>Bestellfrist ist abgelaufen</span>';
-                        return;
-                    }
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                    countdownTimer.innerHTML = `<span>Verbleibende Zeit:</span><strong>${days}d ${hours}h ${minutes}m ${seconds}s</strong>`;
-                };
-                updateTimer();
-                countdownInterval = setInterval(updateTimer, 1000);
-            }
-
-            function calculateAndShowStats() {
-                if (!currentListData || !currentListData.orders) return;
-                const orders = currentListData.orders;
-                const foodCounts = new Map();
-                const drinkCounts = new Map();
-                orders.forEach(order => {
-                    (order.store_items || []).forEach(item => {
-                        const itemName = allItemsMap.get(item.id)?.title || item.id;
-                        foodCounts.set(itemName, (foodCounts.get(itemName) || 0) + 1);
-                    });
-                    if (order.drink) {
-                        drinkCounts.set(order.drink.name, (drinkCounts.get(order.drink.name) || 0) + 1);
+        function setupScrollAnimations(container) {
+            const itemsToAnimate = container.querySelectorAll('.summary-card:not(.is-visible), .order-card:not(.is-visible)');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transitionDelay = `${index * 50}ms`;
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
                     }
                 });
-                const getTopItem = (map) => {
-                    if (map.size === 0) return "N/A";
-                    const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]);
-                    return `${sorted[0][0]} (${sorted[0][1]}x)`;
-                };
-                statsModalBody.innerHTML = `
-                    <div class="stat-item"><span class="label">Anzahl Bestellungen:</span><span class="value">${orders.length}</span></div>
-                    <div class="stat-item"><span class="label">Beliebteste Speise:</span><span class="value">${getTopItem(foodCounts)}</span></div>
-                    <div class="stat-item"><span class="label">Beliebtestes Getränk:</span><span class="value">${getTopItem(drinkCounts)}</span></div>
-                `;
-                statsModalBackdrop.classList.add('is-visible');
+            }, { threshold: 0.1 });
+            itemsToAnimate.forEach(item => observer.observe(item));
+        }
+
+        function handleDelete(orderId) {
+            const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
+            const editKey = myOrderKeys[orderId];
+            if (!editKey) { alert("Fehler: Kein Schlüssel für diese Bestellung gefunden."); return; }
+            if (confirm("Möchtest du diese Bestellung wirklich löschen?")) {
+                fetch(`/api/lists/${listId}/orders/${orderId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ editKey: editKey })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Löschen fehlgeschlagen.");
+                    delete myOrderKeys[orderId];
+                    localStorage.setItem('myOrderKeys', JSON.stringify(myOrderKeys));
+                    loadAndRenderList();
+                })
+                .catch(err => alert(err.message));
             }
-            
-            statsBtn.addEventListener('click', calculateAndShowStats);
-            statsModalCloseBtn.addEventListener('click', () => statsModalBackdrop.classList.remove('is-visible'));
-            statsModalBackdrop.addEventListener('click', (e) => {
-                if (e.target === statsModalBackdrop) statsModalBackdrop.classList.remove('is-visible');
+        }
+
+        ordersContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('delete-btn')) handleDelete(e.target.dataset.orderId);
+            if (e.target.classList.contains('btn-edit')) window.location.href = `liste.html?id=${listId}&edit=${e.target.dataset.orderId}`;
+        });
+        
+        function startCountdown(deadlineString) {
+            if (!deadlineString) return;
+            const deadline = new Date(deadlineString).getTime();
+            countdownTimer.style.display = 'block';
+            if (countdownInterval) clearInterval(countdownInterval);
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const distance = deadline - now;
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    countdownTimer.innerHTML = '<span>Bestellfrist ist abgelaufen</span>';
+                    return;
+                }
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                countdownTimer.innerHTML = `<span>Verbleibende Zeit:</span><strong>${days}d ${hours}h ${minutes}m ${seconds}s</strong>`;
+            };
+            updateTimer();
+            countdownInterval = setInterval(updateTimer, 1000);
+        }
+
+        function calculateAndShowStats() {
+            if (!currentListData || !currentListData.orders) return;
+            const orders = currentListData.orders;
+            const foodCounts = new Map();
+            const drinkCounts = new Map();
+            orders.forEach(order => {
+                (order.store_items || []).forEach(item => {
+                    const itemName = allItemsMap.get(item.id)?.title || item.id;
+                    foodCounts.set(itemName, (foodCounts.get(itemName) || 0) + 1);
+                });
+                if (order.drink) {
+                    drinkCounts.set(order.drink.name, (drinkCounts.get(order.drink.name) || 0) + 1);
+                }
             });
+            const getTopItem = (map) => {
+                if (map.size === 0) return "N/A";
+                const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]);
+                return `${sorted[0][0]} (${sorted[0][1]}x)`;
+            };
+            statsModalBody.innerHTML = `
+                <div class="stat-item"><span class="label">Anzahl Bestellungen:</span><span class="value">${orders.length}</span></div>
+                <div class="stat-item"><span class="label">Beliebteste Speise:</span><span class="value">${getTopItem(foodCounts)}</span></div>
+                <div class="stat-item"><span class="label">Beliebtestes Getränk:</span><span class="value">${getTopItem(drinkCounts)}</span></div>
+            `;
+            statsModalBackdrop.classList.add('is-visible');
+        }
+        
+        statsBtn.addEventListener('click', calculateAndShowStats);
+        statsModalCloseBtn.addEventListener('click', () => statsModalBackdrop.classList.remove('is-visible'));
+        statsModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === statsModalBackdrop) statsModalBackdrop.classList.remove('is-visible');
+        });
 
-            function loadAndRenderList() {
-                if (!listId) return;
-                const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
-                const listUrl = `/api/lists/${listId}`;
-                const itemsUrl = `/api/items`;
-                Promise.all([fetch(listUrl).then(res => res.json()), fetch(itemsUrl).then(res => res.json())])
-                .then(([listData, itemsData]) => {
-                    currentListData = listData;
-                    if (itemsData?.categories) itemsData.categories.forEach(cat => cat.items?.forEach(item => allItemsMap.set(item.id, { ...item, category: cat.name })));
-                    if (itemsData?.drinks) itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
+        function loadAndRenderList() {
+            if (!listId) return;
+            const myOrderKeys = JSON.parse(localStorage.getItem('myOrderKeys')) || {};
+            const listUrl = `/api/lists/${listId}`;
+            const itemsUrl = `/api/items`;
 
-                    const createdDate = new Date(listData.created);
-                    const totalOrders = listData.orders ? listData.orders.length : 0;
-                    listInfoDiv.innerHTML = `<p style="margin:0; color: var(--text-light);"><strong>ID:</strong> ${listData.id} | <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')} | <strong>Bestellungen gesamt:</strong> ${totalOrders}</p>`;
-                    startCountdown(listData.deadline);
-                    summaryListDiv.innerHTML = '';
-                    drinkSummaryListDiv.innerHTML = '';
-                    ordersContainer.innerHTML = '';
+            Promise.all([fetch(listUrl).then(res => res.json()), fetch(itemsUrl).then(res => res.json())])
+            .then(([listData, itemsData]) => {
+                currentListData = listData;
+                if (itemsData?.categories) itemsData.categories.forEach(cat => cat.items?.forEach(item => allItemsMap.set(item.id, { ...item, category: cat.name })));
+                if (itemsData?.drinks) itemsData.drinks.forEach(drink => allItemsMap.set(drink.name, drink));
+
+                const createdDate = new Date(listData.created);
+                const totalOrders = listData.orders ? listData.orders.length : 0;
+                listInfoDiv.innerHTML = `<p style="margin:0; color: var(--text-light);"><strong>ID:</strong> ${listData.id} | <strong>Erstellt:</strong> ${createdDate.toLocaleDateString('de-DE')} | <strong>Bestellungen gesamt:</strong> ${totalOrders}</p>`;
+                startCountdown(listData.deadline);
+                
+                summaryListDiv.innerHTML = '';
+                drinkSummaryListDiv.innerHTML = '';
+                ordersContainer.innerHTML = '';
+                
+                if (Array.isArray(listData.orders) && listData.orders.length > 0) {
+                    detailsAccordion.style.display = 'block';
+                    const foodSummary = new Map();
+                    drinkSummary.clear();
+
+                    listData.orders.forEach(order => {
+                        (order.store_items || []).forEach(storeItem => {
+                            if (!storeItem) return;
+                            const variants = (storeItem.variants || []).sort().join(',');
+                            const dips = (storeItem.dips || []).sort().join(',');
+                            const foodKey = `${storeItem.id}|${variants}|${dips}`;
+                            const summaryItem = foodSummary.get(foodKey);
+                            if (summaryItem) {
+                                summaryItem.count++;
+                                if (!summaryItem.creators.includes(order.creator)) summaryItem.creators.push(order.creator);
+                            } else {
+                                foodSummary.set(foodKey, { count: 1, creators: [order.creator], itemDetails: storeItem });
+                            }
+                        });
+                        if (order.drink && order.drink.name) {
+                            const drinkName = order.drink.name;
+                            drinkSummary.set(drinkName, (drinkSummary.get(drinkName) || 0) + 1);
+                        }
+                    });
+
+                    const sortedFoodSummary = Array.from(foodSummary.entries()).sort((a, b) => {
+                        const itemA = allItemsMap.get(a[1].itemDetails.id);
+                        const itemB = allItemsMap.get(b[1].itemDetails.id);
+                        if (!itemA || !itemB) return 0;
+                        return itemA.category.localeCompare(itemB.category);
+                    });
                     
-                    if (Array.isArray(listData.orders) && listData.orders.length > 0) {
-                        detailsAccordion.style.display = 'block';
-                        const foodSummary = new Map();
-                        drinkSummary.clear();
-                        listData.orders.forEach(order => {
-                            (order.store_items || []).forEach(storeItem => {
-                                if (!storeItem) return;
-                                const variants = (storeItem.variants || []).sort().join(',');
-                                const dips = (storeItem.dips || []).sort().join(',');
-                                const foodKey = `${storeItem.id}|${variants}|${dips}`;
-                                const summaryItem = foodSummary.get(foodKey);
-                                if (summaryItem) {
-                                    summaryItem.count++;
-                                    if (!summaryItem.creators.includes(order.creator)) summaryItem.creators.push(order.creator);
-                                } else {
-                                    foodSummary.set(foodKey, { count: 1, creators: [order.creator], itemDetails: storeItem });
-                                }
-                            });
-                            if (order.drink && order.drink.name) {
-                                const drinkName = order.drink.name;
-                                drinkSummary.set(drinkName, (drinkSummary.get(drinkName) || 0) + 1);
-                            }
-                        });
-                        const sortedFoodSummary = Array.from(foodSummary.entries()).sort((a, b) => {
-                            const itemA = allItemsMap.get(a[1].itemDetails.id);
-                            const itemB = allItemsMap.get(b[1].itemDetails.id);
-                            if (!itemA || !itemB) return 0;
-                            return itemA.category.localeCompare(itemB.category);
-                        });
-                        let lastCategory = "";
-                        sortedFoodSummary.forEach(([key, summary]) => {
-                            const itemMasterData = allItemsMap.get(summary.itemDetails.id);
-                            const itemName = itemMasterData ? itemMasterData.title : `ID: ${summary.itemDetails.id}`;
-                            if (itemMasterData && itemMasterData.category !== lastCategory) {
-                                const categoryHeader = document.createElement('h3');
-                                categoryHeader.className = 'summary-category-subheader';
-                                categoryHeader.textContent = itemMasterData.category;
-                                summaryListDiv.appendChild(categoryHeader);
-                                lastCategory = itemMasterData.category;
-                            }
+                    let lastCategory = "";
+                    sortedFoodSummary.forEach(([key, summary]) => {
+                        const itemMasterData = allItemsMap.get(summary.itemDetails.id);
+                        const itemName = itemMasterData ? itemMasterData.title : `ID: ${summary.itemDetails.id}`;
+                        if (itemMasterData && itemMasterData.category !== lastCategory) {
+                            const categoryHeader = document.createElement('h3');
+                            categoryHeader.className = 'summary-category-subheader';
+                            categoryHeader.textContent = itemMasterData.category;
+                            summaryListDiv.appendChild(categoryHeader);
+                            lastCategory = itemMasterData.category;
+                        }
+                        let extrasHtml = '';
+                        const variants = summary.itemDetails.variants || [];
+                        const dips = summary.itemDetails.dips || [];
+                        if (variants.length > 0 || dips.length > 0) {
+                            extrasHtml = '<ul class="order-extras-list">';
+                            variants.forEach(v => extrasHtml += `<li>${v}</li>`);
+                            dips.forEach(d => extrasHtml += `<li>${d}</li>`);
+                            extrasHtml += '</ul>';
+                        }
+                        const summaryCard = document.createElement('div');
+                        summaryCard.className = 'summary-card';
+                        summaryCard.dataset.key = key;
+                        summaryCard.innerHTML = `<div class="summary-header"><div class="summary-count">${summary.count}x</div><strong>${itemName}</strong></div><div class="order-body">${extrasHtml ? `<div class="order-item">${extrasHtml}</div>` : ''}<div class="order-item"><span class="type">Bestellt von:</span> <span class="name">${[...new Set(summary.creators)].join(', ')}</span></div></div>`;
+                        summaryListDiv.appendChild(summaryCard);
+                    });
+                    
+                    if (drinkSummary.size > 0) {
+                    drinkSummaryListDiv.innerHTML = '';
+    
+                    drinkSummary.forEach((count, name) => {
+                    const drinkCard = document.createElement('div');
+                    drinkCard.className = 'summary-card'; 
+                    drinkCard.style.cursor = 'default';
+        
+                    drinkCard.innerHTML = `
+                    <div class="summary-header">
+                    <div class="summary-count">${count}x</div>
+                    <strong>${name}</strong>
+                    </div>
+                    `;
+                    drinkSummaryListDiv.appendChild(drinkCard);
+                    });
+                    } else {
+                    drinkSummaryListDiv.innerHTML = "<p>Keine Getränke bestellt.</p>";
+                    }
+                    
+                    listData.orders.forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'order-card';
+                        const orderDate = new Date(order.created);
+                        let drinkHtml = '<span class="name">-</span>';
+                        if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
+                        let foodHtml = (order.store_items || []).map(storedItem => {
+                            const itemDetails = allItemsMap.get(storedItem.id);
+                            const itemName = itemDetails ? itemDetails.title : `ID: ${storedItem.id}`;
                             let extrasHtml = '';
-                            const variants = summary.itemDetails.variants || [];
-                            const dips = summary.itemDetails.dips || [];
+                            const variants = storedItem.variants || [];
+                            const dips = storedItem.dips || [];
                             if (variants.length > 0 || dips.length > 0) {
                                 extrasHtml = '<ul class="order-extras-list">';
                                 variants.forEach(v => extrasHtml += `<li>${v}</li>`);
                                 dips.forEach(d => extrasHtml += `<li>${d}</li>`);
                                 extrasHtml += '</ul>';
                             }
-                            const summaryCard = document.createElement('div');
-                            summaryCard.className = 'summary-card';
-                            summaryCard.dataset.key = key;
-                            summaryCard.innerHTML = `<div class="summary-header"><div class="summary-count">${summary.count}x</div><strong>${itemName}</strong></div><div class="order-body">${extrasHtml ? `<div class="order-item">${extrasHtml}</div>` : ''}<div class="order-item"><span class="type">Bestellt von:</span> <span class="name">${[...new Set(summary.creators)].join(', ')}</span></div></div>`;
-                            summaryListDiv.appendChild(summaryCard);
-                        });
-                        if (drinkSummary.size > 0) {
-                            drinkSummaryListDiv.innerHTML = '';
-                            const drinkContainerCard = document.createElement('div');
-                            drinkContainerCard.className = 'summary-card';
-                            drinkContainerCard.style.cursor = 'default';
-                            let drinkHtmlList = '';
-                            drinkSummary.forEach((count, name) => {
-                                drinkHtmlList += `<div class="summary-header" style="padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color);"><div class="summary-count">${count}x</div><strong>${name}</strong></div>`;
-                            });
-                            drinkContainerCard.innerHTML = drinkHtmlList.slice(0, drinkHtmlList.lastIndexOf(' border-bottom'));
-                            drinkSummaryListDiv.appendChild(drinkContainerCard);
-                        } else {
-                            drinkSummaryListDiv.innerHTML = "<p>Keine Getränke bestellt.</p>";
+                            return `<div class="order-item"><span class="type">Speise:</span> <span class="name">${itemName}</span>${extrasHtml}</div>`;
+                        }).join('');
+                        let buttonsHtml = '';
+                        if (myOrderKeys[order.id]) {
+                            buttonsHtml = `<div class="order-actions"><button class="btn-edit" data-order-id="${order.id}">Bearbeiten</button><button class="delete-btn" data-order-id="${order.id}">Löschen</button></div>`;
                         }
-                        listData.orders.forEach(order => {
-                            const orderCard = document.createElement('div');
-                            orderCard.className = 'order-card';
-                            const orderDate = new Date(order.created);
-                            let drinkHtml = '<span class="name">-</span>';
-                            if (order.drink) { drinkHtml = `<span class="name">${order.drink.name}</span>`; }
-                            let foodHtml = (order.store_items || []).map(storedItem => {
-                                const itemDetails = allItemsMap.get(storedItem.id);
-                                const itemName = itemDetails ? itemDetails.title : `ID: ${storedItem.id}`;
-                                let extrasHtml = '';
-                                const variants = storedItem.variants || [];
-                                const dips = storedItem.dips || [];
-                                if (variants.length > 0 || dips.length > 0) {
-                                    extrasHtml = '<ul class="order-extras-list">';
-                                    variants.forEach(v => extrasHtml += `<li>${v}</li>`);
-                                    dips.forEach(d => extrasHtml += `<li>${d}</li>`);
-                                    extrasHtml += '</ul>';
-                                }
-                                return `<div class="order-item"><span class="type">Speise:</span> <span class="name">${itemName}</span>${extrasHtml}</div>`;
-                            }).join('');
-                            let buttonsHtml = '';
-                            if (myOrderKeys[order.id]) {
-                                buttonsHtml = `<div class="order-actions"><button class="btn-edit" data-order-id="${order.id}">Bearbeiten</button><button class="delete-btn" data-order-id="${order.id}">Löschen</button></div>`;
-                            }
-                            orderCard.innerHTML = `<div class="order-header"><strong>${order.creator}</strong><span class="timestamp">${orderDate.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span></div><div class="order-body">${foodHtml}<div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div></div>${buttonsHtml}`;
-                            ordersContainer.appendChild(orderCard);
-                        });
-                        
-                        applyCheckedState();
-                        if (isInitialLoad) {
-                            setupScrollAnimations(summaryListDiv);
-                            setupScrollAnimations(drinkSummaryListDiv);
-                            setupScrollAnimations(ordersContainer);
-                        }
-                    } else {
-                        summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
-                        detailsAccordion.style.display = 'none';
+                        orderCard.innerHTML = `<div class="order-header"><strong>${order.creator}</strong><span class="timestamp">${orderDate.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span></div><div class="order-body">${foodHtml}<div class="order-item"><span class="type">Getränk:</span> ${drinkHtml}</div></div>${buttonsHtml}`;
+                        ordersContainer.appendChild(orderCard);
+                    });
+                    
+                    applyCheckedState();
+                    if (isInitialLoad) {
+                        setupScrollAnimations(summaryListDiv);
+                        setupScrollAnimations(drinkSummaryListDiv);
+                        setupScrollAnimations(ordersContainer);
                     }
-                    isInitialLoad = false;
-                })
-                .catch(err => { 
-                    console.error("Fehler:", err);
-                    ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste.</p>";
-                });
-            }
-            loadAndRenderList();
-            setInterval(loadAndRenderList, 5000);
-        });
-    </script>
+                } else {
+                    summaryListDiv.innerHTML = "<p>Noch keine Bestellungen vorhanden.</p>";
+                    detailsAccordion.style.display = 'none';
+                }
+                isInitialLoad = false;
+            })
+            .catch(err => { 
+                console.error("Fehler:", err);
+                ordersContainer.innerHTML = "<p style='color:red;'>Fehler beim Laden der Liste.</p>";
+            });
+        }
+        
+        loadAndRenderList();
+    });
+</script>
 </body>
 </html>

@@ -15,6 +15,9 @@ var items = response.Body;
 
 POST {{.instance}}/api/lists
 
+[Body]
+{}
+
 [Script]
 debug(response);
 assert_eq(response.StatusCode, 201, "status code");
@@ -30,7 +33,7 @@ GET {{.instance}}/api/lists/{{.listId}}
 [Script]
 debug(response);
 assert_eq(response.StatusCode, 200, "status code");
-assert_eq(response.Body.orders, null, "no orders in list");
+assert(response.Body.orders == null || response.Body.orders.length == 0, "no orders in list");
 
 ---
 
@@ -41,14 +44,16 @@ POST {{.instance}}/api/lists/someInvalidListId/orders
 [Body]
 {
     "creator": "zekro",
-    "store_item": {
-        "id": "someInvalidItemId"
-    }
+    "store_items": [
+        {
+            "id": "someInvalidItemId"
+        }
+    ]
 }
 
 [Script]
 debug(response);
-assert_eq(response.StatusCode, 400, "status code");
+assert_eq(response.StatusCode, 404, "status code");
 
 ---
 
@@ -59,9 +64,11 @@ POST {{.instance}}/api/lists/{{.listId}}/orders
 [Body]
 {
     "creator": "",
-    "store_item": {
-        "id": ""
-    }
+    "store_items": [
+        {
+            "id": ""
+        }
+    ] 
 }
 
 [Script]
@@ -77,9 +84,11 @@ POST {{.instance}}/api/lists/{{.listId}}/orders
 [Body]
 {
     "creator": "zekro",
-    "store_item": {
-        "id": "someInvalidItemId"
-    }
+    "store_items": [
+        {
+            "id": "someInvalidItemId"
+        }
+    ]
 }
 
 [Script]
@@ -99,12 +108,14 @@ var variant = item.variants[0].name;
 [Body]
 {
     "creator": "zekro",
-    "store_item": {
-        "id": "{{.item.id}}",
-        "variants": [
-            "{{.variant}}"
-        ]
-    }
+    "store_items": [
+        {
+            "id": "{{.item.id}}",
+            "variants": [
+                "{{.variant}}"
+            ]
+        }
+    ]
 }
 
 [Script]
@@ -122,8 +133,8 @@ debug(response);
 assert_eq(response.StatusCode, 200, "status code");
 assert_eq(response.Body.orders.length, 1, "one order in list");
 assert_eq(response.Body.orders[0].creator, "zekro", "order creator");
-assert_eq(response.Body.orders[0].store_item.id, item.id, "order item id");
-assert_eq(response.Body.orders[0].store_item.variants, [variant], "order item variants");
+assert_eq(response.Body.orders[0].store_items[0].id, item.id, "order item id");
+assert_eq(response.Body.orders[0].store_items[0].variants, [variant], "order item variants");
 
 ---
 

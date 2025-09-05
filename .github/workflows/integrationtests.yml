@@ -1,0 +1,37 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  integration_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+      - name: Setup Goat
+        uses: studio-b12/setup-goat@v1.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "^1.25"
+      - name: Run App and Integration Tests
+        env:
+          HMS_BIND_ADDRESS: 127.0.0.1:8080
+          HMS_DATABASE_DSN: database.sqlite3
+        run: |
+          task run &
+          for i in {1..20}; do
+            echo "Awaiting readyness ..."
+            sleep 3
+            if curl -sSf http://127.0.0.1:8080 2>&1 >/dev/null; then
+              echo "Ready!"
+              break
+            fi
+          done
+          goat --params integrationtests/params.local.toml integrationtests/tests

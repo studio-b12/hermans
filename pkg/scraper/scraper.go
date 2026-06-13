@@ -105,9 +105,12 @@ func ScrapeDrinks() ([]*Drink, error) {
 	var drinks []*Drink
 	doc.Find("div.panes div.section").First().Find("div.item").Each(func(i int, s *goquery.Selection) {
 		var drink Drink
-		drink.Name = s.Find("div.label").Text()
+		drink.Name = s.Find("div.item-inside > div.label").Text()
+		drink.Price = s.Find("div.item-inside > div.price").Text()
+		if drink.Name == "" || drink.Price == "" {
+			return
+		}
 		drink.Description = s.Find("div.subline").Text()
-		drink.Price = s.Find("div.price").Text()
 		drinks = append(drinks, &drink)
 	})
 

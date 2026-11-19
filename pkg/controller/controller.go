@@ -2,12 +2,14 @@ package controller
 
 import (
 	"errors"
+	"log/slog"
 	"path/filepath"
 	"slices"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/robfig/cron/v3"
 	"github.com/studio-b12/elk"
 	"github.com/zekrotja/hermans/pkg/cache"
 	"github.com/zekrotja/hermans/pkg/model"
@@ -15,24 +17,50 @@ import (
 )
 
 type Controller struct {
-	db Database
-
-	validator *validator.Validate
-
+	db          Database
+	validator   *validator.Validate
 	scrapeCache *cache.LocalCache[*scraper.Data]
+	scheduler   *cron.Cron
 }
 
-func New(cacheDir string, db Database) (*Controller, error) {
+func New(cacheDir string, db Database, scrapeSchedule string) (*Controller, error) {
 	scrapeDb, err := cache.OpenLocalCache[*scraper.Data](filepath.Join(cacheDir, "scrape_data.msgpack"))
 	if err != nil {
 		return nil, err
 	}
 
+	scheduler := cron.New()
+	defer scheduler.Start()
+
 	t := &Controller{
 		db:          db,
 		scrapeCache: scrapeDb,
 		validator:   validator.New(validator.WithRequiredStructEnabled()),
+		scheduler:   scheduler,
 	}
+
+	if scrapeSchedule != "" {
+		_, err := scheduler.AddFunc(scrapeSchedule, func() {
+			if _, err := t.Scrape(); err != nil {
+				slog.Error("scraping schedule failed", "err", err)
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+		slog.Info("scraping job scheduled", "schedule", scrapeSchedule)
+	}
+
+	go func() {
+		start := time.Now()
+		slog.Info("scraping store items ...")
+		if _, err := t.Scrape(); err != nil {
+			slog.Error("scraping failed", "err", err)
+			return
+		}
+		slog.Info("store items scraped", "took", time.Since(start))
+	}()
+
 	return t, nil
 }
 

@@ -12,10 +12,11 @@ import (
 )
 
 type Args struct {
-	BindAddress string     `arg:"--bind-address,env:HMS_BIND_ADDRESS" help:"Address to bind to" default:"0.0.0.0:8080"`
-	DatabaseDsn string     `arg:"--database-dsn,required,env:HMS_DATABASE_DSN" help:"Database DSN"`
-	CacheDir    string     `arg:"--cache-dir,env:HMS_CACHE_DIR" help:"Cache directory" default:"./cache"`
-	LogLevel    slog.Level `arg:"--log-level,env:HMS_LOG_LEVEL" help:"Log level" default:"info"`
+	BindAddress    string     `arg:"--bind-address,env:HMS_BIND_ADDRESS" help:"Address to bind to" default:"0.0.0.0:8080"`
+	DatabaseDsn    string     `arg:"--database-dsn,required,env:HMS_DATABASE_DSN" help:"Database DSN"`
+	CacheDir       string     `arg:"--cache-dir,env:HMS_CACHE_DIR" help:"Cache directory" default:"./cache"`
+	ScrapeSchedule string     `arg:"--scrape-schedule,env:HMS_SCRAPE_SCHEDULE" default:"0 3 * * *" help:"Cron schedule for scraping"`
+	LogLevel       slog.Level `arg:"--log-level,env:HMS_LOG_LEVEL" help:"Log level" default:"info"`
 }
 
 func checkErr(msg string, err error, extraFields ...any) {
@@ -42,7 +43,7 @@ func main() {
 	checkErr("failed initializing database", err)
 
 	slog.Info("initializing controller ...")
-	ctl, err := controller.New(args.CacheDir, db)
+	ctl, err := controller.New(args.CacheDir, db, args.ScrapeSchedule)
 	checkErr("failed initializing controller", err)
 
 	a := api.New(ctl, args.BindAddress)
